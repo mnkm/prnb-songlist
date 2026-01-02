@@ -14,7 +14,7 @@ $(function () {
     function calcTableHeight() {
         const headerHeight = $('h3').outerHeight(true);
         const filterHeight = $('.filter-area').outerHeight(true);
-        const padding = 200; // 余白調整
+        const padding = 315; // 余白調整
         return $(window).height() - headerHeight - filterHeight - padding;
     }
 
