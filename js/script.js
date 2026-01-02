@@ -1,4 +1,15 @@
 $(function () {
+    const TALENT_COLORS = {
+        yura: '#ebf8ff',
+        ren: '#fff2da',
+        hinata: '#ebf8e2',
+        ruka: '#d0ccff'
+    };
+
+    function applyAccentColor(talent) {
+        const color = TALENT_COLORS[talent] || '#337ab7';
+        document.documentElement.style.setProperty('--accent-color', color);
+    }
     function calcTableHeight() {
         const headerHeight = $('h3').outerHeight(true);
         const filterHeight = $('.filter-area').outerHeight(true);
@@ -67,6 +78,7 @@ $(function () {
     }
 
     function loadTable(talent) {
+        applyAccentColor(talent);
         showLoading();
 
         $.getJSON(
@@ -150,6 +162,8 @@ $(function () {
     }
     $(function () {
         // 初期表示
+        const initialTalent = $('#talentFilter').val();
+        applyAccentColor(initialTalent);
         loadTable($('#talentFilter').val());
 
         // タレント変更時

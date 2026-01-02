@@ -66,3 +66,43 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* アクセントカラー */
+:root {
+  --accent-color: #337ab7;
+}
+
+/* テーブルヘッダ */
+table.dataTable thead th {
+  background-color: var(--accent-color);
+  color: #000;
+}
+
+/* 選択・ホバー */
+table.dataTable tbody tr:hover {
+  background-color: color-mix(in srgb, var(--accent-color) 100%, gray);
+}
+
+/* ページネーション */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--accent-color) !important;
+  color: #000 !important;
+  border: none;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+  background: var(--accent-color) !important;
+  color: #000 !important;
+  border: 1px solid var(--accent-color) !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+  background: var(--accent-color) !important;
+  color: #000 !important;
+  border: 1px solid var(--accent-color) !important;
+}
+
+/* セレクト・入力のフォーカス */
+.form-control:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
