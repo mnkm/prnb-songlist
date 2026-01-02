@@ -28,6 +28,13 @@ $(function () {
     }
     let table = null;
 
+    function getUrlParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
+
+    const AVAILABLE_TALENTS = ['yura', 'ren', 'hinata', 'ruka'];
+
     function resetFilters() {
         // セレクト初期化
         $('#genreFilter').val('');
@@ -40,6 +47,18 @@ $(function () {
             table.draw();
         }
     }
+    function updateUrlTalent(talent) {
+        const url = new URL(window.location);
+        url.searchParams.set('talent', talent);
+        history.replaceState(null, '', url);
+    }
+    
+    $('#talentFilter').on('change', function () {
+        const talent = this.value;
+        updateUrlTalent(talent);
+        applyAccentColor(talent);
+        loadTable(talent);
+    });
 
     function rebuildFilters(rows) {
         // ジャンル再生成
@@ -160,9 +179,20 @@ $(function () {
             }
             );
     }
+
     $(function () {
+        // URLパラメータから取得
+        const urlTalent = getUrlParam('talent');
+
+        // select の初期値決定
+        const initialTalent = AVAILABLE_TALENTS.includes(urlTalent)
+            ? urlTalent
+            : $('#talentFilter').val(); // HTML側のデフォルト
+
+        // select に反映
+        $('#talentFilter').val(initialTalent);
+
         // 初期表示
-        const initialTalent = $('#talentFilter').val();
         applyAccentColor(initialTalent);
         loadTable($('#talentFilter').val());
 
