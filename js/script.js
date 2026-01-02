@@ -20,12 +20,10 @@ $(function () {
 
     function showLoading() {
         $('#loadingOverlay').show();
-        //$('#talentFilter').prop('disabled', true);
     }
 
     function hideLoading() {
         $('#loadingOverlay').hide();
-        //$('#talentFilter').prop('disabled', false);
     }
     let table = null;
 
@@ -40,6 +38,7 @@ $(function () {
         // セレクト初期化
         $('#genreFilter').val('');
         $('#artistFilter').val('');
+        $('#typeFilter').val('');
         $('#textFilter').val('');
 
         if (table) {
@@ -75,21 +74,35 @@ $(function () {
         artists.forEach(a => {
             $('#artistFilter').append(`<option value="${a}">${a}</option>`);
         });
+
+        // 種類再生成
+        const types = [...new Set(rows.map(r => r.type).filter(Boolean))].sort();
+        $('#typeFilter').empty().append('<option value="">すべて</option>');
+        types.forEach(a => {
+            $('#typeFilter').append(`<option value="${a}">${a}</option>`);
+        });
     }
 
     function applyFilters() {
         const genre = $('#genreFilter').val();
         const artist = $('#artistFilter').val();
+        const type = $('#typeFilter').val();
         const text = $('#textFilter').val();
 
+        table.column(1).search(
+            artist ? '^' + $.fn.dataTable.util.escapeRegex(artist) + '$' : '',
+            true,
+            false
+        );
+        
         table.column(2).search(
             genre ? '^' + $.fn.dataTable.util.escapeRegex(genre) + '$' : '',
             true,
             false
         );
 
-        table.column(1).search(
-            artist ? '^' + $.fn.dataTable.util.escapeRegex(artist) + '$' : '',
+        table.column(3).search(
+            type ? '^' + $.fn.dataTable.util.escapeRegex(type) + '$' : '',
             true,
             false
         );
@@ -124,6 +137,11 @@ $(function () {
                                 { data: 'genre', title: 'ジャンル' },
 
                                 // 非表示だが検索対象
+                                {
+                                    data: 'type',
+                                    visible: false,
+                                    searchable: true
+                                },
                                 {
                                     data: 'reading',
                                     visible: false,
@@ -203,7 +221,7 @@ $(function () {
         });
 
         // フィルタ操作
-        $('#genreFilter, #artistFilter').on('change', applyFilters);
+        $('#genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
         $('#textFilter').on('input', applyFilters);
     });
 });
