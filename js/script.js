@@ -1,5 +1,6 @@
 $(function () {
     const TALENT_COLORS = {
+        nina: '#fff0f3',
         yura: '#ebf8ff',
         ren: '#fff2da',
         hinata: '#ebf8e2',
@@ -33,7 +34,7 @@ $(function () {
         return params.get(name);
     }
 
-    const AVAILABLE_TALENTS = ['yura', 'ren', 'hinata', 'ruka'];
+    const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
 
     function resetFilters() {
         // セレクト初期化
@@ -52,7 +53,7 @@ $(function () {
         url.searchParams.set('talent', talent);
         history.replaceState(null, '', url);
     }
-    
+
     $('#talentFilter').on('change', function () {
         const talent = this.value;
         updateUrlTalent(talent);
