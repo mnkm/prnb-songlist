@@ -50,6 +50,7 @@ $(function () {
     function updateUrlTalent(talent) {
         const url = new URL(window.location);
         url.searchParams.set('talent', talent);
+        url.searchParams.delete('type');
         history.replaceState(null, '', url);
     }
 
@@ -110,7 +111,7 @@ $(function () {
         table.search(text).draw();
     }
 
-    function loadTable(talent) {
+    function loadTable(talent, type) {
         applyAccentColor(talent);
         showLoading();
 
@@ -189,6 +190,16 @@ $(function () {
 
                     // プルダウン再構築
                     rebuildFilters(res.rows);
+
+                    // 条件：type指定がrequestの場合
+                    if (talent =='hinata' && type == 'request') {
+                        $('#typeFilter').val('弾き語り');
+
+                        // 初期フィルタ適用
+                        applyFilters();
+                    } else {
+                        updateUrlTalent(talent);
+                    }
                 })
             .fail(function () {
                 alert('データの取得に失敗しました');
@@ -202,18 +213,19 @@ $(function () {
     $(function () {
         // URLパラメータから取得
         const urlTalent = getUrlParam('talent');
+        const urlType = getUrlParam('type');
 
         // select の初期値決定
         const initialTalent = AVAILABLE_TALENTS.includes(urlTalent)
             ? urlTalent
             : $('#talentFilter').val(); // HTML側のデフォルト
-
+        
         // select に反映
         $('#talentFilter').val(initialTalent);
 
         // 初期表示
         applyAccentColor(initialTalent);
-        loadTable($('#talentFilter').val());
+        loadTable($('#talentFilter').val(), urlType);
 
         // タレント変更時
         $('#talentFilter').on('change', function () {
@@ -223,5 +235,6 @@ $(function () {
         // フィルタ操作
         $('#genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
         $('#textFilter').on('input', applyFilters);
+
     });
 });
