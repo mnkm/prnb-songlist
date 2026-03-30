@@ -50,7 +50,12 @@ $(function () {
     function updateUrlTalent(talent) {
         const url = new URL(window.location);
         url.searchParams.set('talent', talent);
-        url.searchParams.delete('type');
+        url.searchParams.keys().forEach(key => {
+            if (key !== 'talent'){
+                url.searchParams.delete(key);
+            }
+        })
+
         history.replaceState(null, '', url);
     }
 
