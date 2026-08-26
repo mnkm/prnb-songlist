@@ -82,7 +82,7 @@ $(function () {
         loadTable(talent);
     });
 
-    $('#grid tbody').on('click', 'tr', function () {
+    $('#grid').on('click', 'tbody tr', function () {
         if (!table) {
             return;
         }
