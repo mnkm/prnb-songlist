@@ -77,6 +77,26 @@ $(function () {
     const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
+    function updateFilterPanelTitles() {
+        const isMobile = mobileMediaQuery.matches;
+        const talentCollapsed = !$('#talentFilterPanel').hasClass('in');
+        const detailCollapsed = !$('#detailFilterPanel').hasClass('in');
+        const textCollapsed = !$('#textFilterPanel').hasClass('in');
+        const talentName = $('#talentFilter option:selected').text();
+        const hasFilter = $('#genreFilter').val() || $('#artistFilter').val() || $('#typeFilter').val();
+        const hasKeyword = $('#textFilter').val();
+
+        $('#talentPanelTitle').text(
+            isMobile && talentCollapsed ? `タレント：${talentName}` : 'タレント'
+        );
+        $('#detailPanelTitle').text(
+            isMobile && detailCollapsed && hasFilter && !hasKeyword ? 'フィルタ：設定中' : 'フィルタ'
+        );
+        $('#textPanelTitle').text(
+            isMobile && textCollapsed && hasKeyword ? 'キーワード：設定中' : 'キーワード'
+        );
+    }
+
     function resetFilters() {
         // セレクト初期化
         $('#genreFilter').val('');
@@ -106,6 +126,7 @@ $(function () {
         const talent = this.value;
         updateUrlTalent(talent);
         applyAccentColor(talent);
+        updateFilterPanelTitles();
         loadTable(talent);
     });
 
@@ -302,6 +323,7 @@ $(function () {
 
                     // プルダウン再構築
                     rebuildFilters(res.rows);
+                    updateFilterPanelTitles();
 
                     // 条件：type指定がrequestの場合
                     if (talent =='hinata' && type == 'request') {
@@ -350,13 +372,21 @@ $(function () {
 
         // フィルタ操作
         $('#genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
-        $('#textFilter').on('input', applyFilters);
+        $('#genreFilter, #artistFilter, #typeFilter').on('change', updateFilterPanelTitles);
+        $('#textFilter').on('input', function () {
+            applyFilters();
+            updateFilterPanelTitles();
+        });
         mobileMediaQuery.addEventListener('change', function () {
+            updateFilterPanelTitles();
             updateResponsiveColumns();
             updateTableHeight();
         });
         $(window).on('resize', updateTableHeight);
-        $('.filter-panel .panel-collapse').on('shown.bs.collapse hidden.bs.collapse', updateTableHeight);
+        $('.filter-panel .panel-collapse').on('shown.bs.collapse hidden.bs.collapse', function () {
+            updateFilterPanelTitles();
+            updateTableHeight();
+        });
 
     });
 });
