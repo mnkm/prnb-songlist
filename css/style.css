@@ -85,6 +85,11 @@ body {
   clear: both;
 }
 
+.table-area .dataTable th:nth-child(3),
+.table-area .dataTable td:nth-child(3) {
+  white-space: nowrap;
+}
+
 /* ローディング */
 .loading-overlay {
     position: fixed;
