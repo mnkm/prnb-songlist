@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROJECT NEBULA タレント別楽曲リスト</title>
 
     <!-- jQuery -->
@@ -26,46 +27,74 @@
         <h5></h5>
 
 
-        <div class="row filter-area" style="margin-bottom: 15px;">
-            <div class="col-sm-4">
-                <label>タレント</label>
-                <select id="talentFilter" class="form-control">
-                    <option value="nina">桃瀬にな</option>
-                    <option value="yura">碓氷ゆら</option>
-                    <option value="ren">鈴莉れん</option>
-                    <option value="hinata">菜鳥ひなた</option>
-                    <option value="ruka">紫雨るか</option>
-                </select>
+        <div class="panel panel-default filter-panel">
+            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#talentFilterPanel" aria-expanded="true" aria-controls="talentFilterPanel">
+                <span>タレント選択</span>
+                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
+            </div>
+            <div id="talentFilterPanel" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="row filter-area">
+                        <div class="col-sm-4">
+                            <select id="talentFilter" class="form-control">
+                                <option value="nina">桃瀬にな</option>
+                                <option value="yura">碓氷ゆら</option>
+                                <option value="ren">鈴莉れん</option>
+                                <option value="hinata">菜鳥ひなた</option>
+                                <option value="ruka">紫雨るか</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="row filter-area" style="margin-bottom: 15px;">
-            <div class="col-sm-4">
-                <label>ジャンル</label>
-                <select id="genreFilter" class="form-control">
-                    <option value="">すべて</option>
-                </select>
+        <div class="panel panel-default filter-panel">
+            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#detailFilterPanel" aria-expanded="true" aria-controls="detailFilterPanel">
+                <span>フィルタ</span>
+                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
             </div>
+            <div id="detailFilterPanel" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="row filter-area">
+                        <div class="col-sm-4">
+                            <label>ジャンル</label>
+                            <select id="genreFilter" class="form-control">
+                                <option value="">すべて</option>
+                            </select>
+                        </div>
 
-            <div class="col-sm-4">
-                <label>アーティスト</label>
-                <select id="artistFilter" class="form-control">
-                    <option value="">すべて</option>
-                </select>
-            </div>
+                        <div class="col-sm-4">
+                            <label>アーティスト</label>
+                            <select id="artistFilter" class="form-control">
+                                <option value="">すべて</option>
+                            </select>
+                        </div>
 
-            <div class="col-sm-4">
-                <label>種類</label>
-                <select id="typeFilter" class="form-control">
-                    <option value="">すべて</option>
-                </select>
+                        <div class="col-sm-4">
+                            <label>種類</label>
+                            <select id="typeFilter" class="form-control">
+                                <option value="">すべて</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="row filter-area" style="margin-bottom: 15px;">
-            <div class="col-sm-4">
-                <label>検索</label>
-                <input type="text" id="textFilter" class="form-control" placeholder="キーワード検索">
+        <div class="panel panel-default filter-panel">
+            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#textFilterPanel" aria-expanded="true" aria-controls="textFilterPanel">
+                <span>キーワード検索</span>
+                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
+            </div>
+            <div id="textFilterPanel" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="row filter-area">
+                        <div class="col-sm-4">
+                            <input type="text" id="textFilter" class="form-control" placeholder="キーワード検索">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

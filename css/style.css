@@ -22,15 +22,60 @@ body {
     padding-bottom: 10px;
 }
 
+.filter-panel {
+  flex: 0 0 auto;
+  margin-bottom: 15px;
+  border-color: #ddd;
+}
+
+.filter-panel > .panel-heading {
+  background-color: var(--accent-color);
+  border-color: #ddd;
+}
+
+.filter-panel .panel-heading {
+  cursor: pointer;
+}
+
+.filter-panel-icon {
+  float: right;
+  transition: transform 0.2s ease;
+}
+
+.filter-panel .panel-heading.collapsed .filter-panel-icon {
+  transform: rotate(180deg);
+}
+
 /* DataTablesのスクロール */
 .table-area {
     flex: 1 1 auto;
     min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-footer {
+  flex: 0 0 auto;
 }
 
 .dataTables_scrollBody {
-    height: 100% !important;
+  min-height: 0;
     overflow-y: auto !important;
+}
+
+.table-area .dataTables_wrapper {
+  display: block;
+}
+
+.table-area .dataTables_scroll {
+  overflow: hidden;
+}
+
+.table-area .dataTables_info,
+.table-area .dataTables_paginate {
+  float: none;
+  clear: both;
 }
 
 /* ローディング */
@@ -103,8 +148,8 @@ table.dataTable tbody tr:hover {
 
 /* セレクト・入力のフォーカス */
 .form-control:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 5px var(--accent-color);
+  border-color: #ddd;
+  box-shadow: 0 0 5px #ddd;
 }
 
 /* トースト通知 */
@@ -142,5 +187,64 @@ table.dataTable tbody tr:hover {
     right: 10px;
     bottom: 10px;
     max-width: calc(100% - 20px);
+  }
+}
+
+@media (max-width: 767px) {
+  .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .page-wrapper > h3 {
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .filter-panel {
+    margin-bottom: 8px;
+  }
+
+  .filter-panel .panel-body {
+    padding: 10px;
+  }
+
+  .filter-panel .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .filter-panel .col-sm-4 {
+    width: 100%;
+    float: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .filter-panel .form-control {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .filter-panel .col-sm-4:last-child {
+    margin-bottom: 0;
+  }
+
+  .table-area {
+    width: 100%;
+  }
+
+  .dataTables_scrollBody,
+  .dataTables_scrollHead {
+    width: 100% !important;
+  }
+
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    float: none;
+    text-align: center;
+    margin-top: 8px;
   }
 }

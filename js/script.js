@@ -11,11 +11,37 @@ $(function () {
         const color = TALENT_COLORS[talent] || '#337ab7';
         document.documentElement.style.setProperty('--accent-color', color);
     }
+    function updateTableAreaHeight() {
+        const tableArea = $('.table-area');
+        const footer = $('.page-footer');
+        if (!tableArea.length || !footer.length) {
+            return;
+        }
+
+        const tableAreaTop = tableArea.offset().top;
+        const footerHeight = footer.outerHeight(true);
+        const availableHeight = Math.max(0, $(window).height() - tableAreaTop - footerHeight);
+        tableArea.css({
+            height: `${availableHeight}px`,
+            maxHeight: `${availableHeight}px`
+        });
+    }
+
     function calcTableHeight() {
-        const headerHeight = $('h3').outerHeight(true);
-        const filterHeight = $('.filter-area').outerHeight(true);
-        const padding = 315; // 余白調整
-        return $(window).height() - headerHeight - filterHeight - padding;
+        updateTableAreaHeight();
+        const tableArea = $('.table-area');
+        const wrapper = tableArea.find('.dataTables_wrapper');
+        if (!wrapper.length) {
+            return Math.max(50, tableArea.innerHeight() - 100);
+        }
+
+        const lengthHeight = wrapper.find('.dataTables_length').outerHeight(true) || 0;
+        const scrollHeadHeight = wrapper.find('.dataTables_scrollHead').outerHeight(true) || 0;
+        const infoHeight = wrapper.find('.dataTables_info').outerHeight(true) || 0;
+        const pagerHeight = wrapper.find('.dataTables_paginate').outerHeight(true) || 0;
+        const controlsHeight = lengthHeight + scrollHeadHeight + infoHeight + pagerHeight;
+
+        return Math.max(0, tableArea.innerHeight() - controlsHeight);
     }
 
     function showLoading() {
@@ -49,6 +75,7 @@ $(function () {
     }
 
     const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
+    const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
     function resetFilters() {
         // セレクト初期化
@@ -157,6 +184,41 @@ $(function () {
         table.search(text).draw();
     }
 
+    function updateResponsiveColumns() {
+        if (!table) {
+            return;
+        }
+
+        table.column(2).visible(!mobileMediaQuery.matches, false);
+        table.columns.adjust();
+    }
+
+    function setInitialFilterPanelState() {
+        $('#talentFilterPanel').collapse('show');
+        $('#detailFilterPanel, #textFilterPanel').collapse(
+            mobileMediaQuery.matches ? 'hide' : 'show'
+        );
+    }
+
+    function updateTableHeight() {
+        if (!table) {
+            return;
+        }
+
+        updateTableAreaHeight();
+        const height = calcTableHeight();
+        const scrollHeadHeight = $('.dataTables_scrollHead').outerHeight(true) || 0;
+        const scrollHeight = Math.max(0, height + scrollHeadHeight);
+        table.settings()[0].oScroll.sY = `${height}px`;
+        $('.dataTables_scroll')
+            .css('height', 'auto')
+            .css('max-height', `${scrollHeight}px`);
+        $('.dataTables_scrollBody')
+            .css('height', 'auto')
+            .css('max-height', `${height}px`);
+        table.columns.adjust();
+    }
+
     function loadTable(talent, type) {
         applyAccentColor(talent);
         showLoading();
@@ -220,10 +282,14 @@ $(function () {
                                 }
                             }
                         });
+                        updateResponsiveColumns();
+                        updateTableHeight();
                     } else {
                         table.clear();
                         table.rows.add(res.rows);
                         table.draw();
+                        updateResponsiveColumns();
+                        updateTableHeight();
                     }
 
                     // DataTablesが生成した検索ボックスを移動
@@ -248,6 +314,7 @@ $(function () {
                     }
                 })
             .fail(function () {
+                applyAccentColor(talent);
                 alert('データの取得に失敗しました');
             })
             .always(function () {
@@ -269,6 +336,9 @@ $(function () {
         // select に反映
         $('#talentFilter').val(initialTalent);
 
+        // スマートフォンではフィルタパネルを初期状態で折りたたむ
+        setInitialFilterPanelState();
+
         // 初期表示
         applyAccentColor(initialTalent);
         loadTable($('#talentFilter').val(), urlType);
@@ -281,6 +351,12 @@ $(function () {
         // フィルタ操作
         $('#genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
         $('#textFilter').on('input', applyFilters);
+        mobileMediaQuery.addEventListener('change', function () {
+            updateResponsiveColumns();
+            updateTableHeight();
+        });
+        $(window).on('resize', updateTableHeight);
+        $('.filter-panel .panel-collapse').on('shown.bs.collapse hidden.bs.collapse', updateTableHeight);
 
     });
 });
