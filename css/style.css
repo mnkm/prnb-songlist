@@ -106,3 +106,41 @@ table.dataTable tbody tr:hover {
   border-color: var(--accent-color);
   box-shadow: 0 0 5px var(--accent-color);
 }
+
+/* トースト通知 */
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 10000;
+  max-width: calc(100% - 40px);
+  padding: 12px 18px;
+  border-radius: 4px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.is-success {
+  background-color: #3c763d;
+}
+
+.toast.is-error {
+  background-color: #a94442;
+}
+
+@media (max-width: 480px) {
+  .toast {
+    right: 10px;
+    bottom: 10px;
+    max-width: calc(100% - 20px);
+  }
+}

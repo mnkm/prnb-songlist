@@ -25,6 +25,22 @@ $(function () {
     function hideLoading() {
         $('#loadingOverlay').hide();
     }
+
+    let toastTimer = null;
+
+    function showToast(message, type) {
+        const $toast = $('#toast');
+        clearTimeout(toastTimer);
+        $toast
+            .removeClass('is-success is-error')
+            .addClass(`is-${type}`)
+            .text(message)
+            .addClass('is-visible');
+        toastTimer = setTimeout(function () {
+            $toast.removeClass('is-visible');
+        }, 2500);
+    }
+
     let table = null;
 
     function getUrlParam(name) {
@@ -64,6 +80,31 @@ $(function () {
         updateUrlTalent(talent);
         applyAccentColor(talent);
         loadTable(talent);
+    });
+
+    $('#grid tbody').on('click', 'tr', function () {
+        if (!table) {
+            return;
+        }
+
+        const row = table.row(this).data();
+        if (!row) {
+            return;
+        }
+
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            showToast('クリップボードへのコピーに失敗しました', 'error');
+            return;
+        }
+
+        const text = `${row.title} / ${row.artist}`;
+        navigator.clipboard.writeText(text)
+            .then(function () {
+                showToast(`コピーしました: ${text}`, 'success');
+            })
+            .catch(function () {
+                showToast('クリップボードへのコピーに失敗しました', 'error');
+            });
     });
 
     function rebuildFilters(rows) {
