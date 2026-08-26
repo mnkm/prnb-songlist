@@ -78,7 +78,6 @@ $(function () {
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
     function updateFilterPanelTitles() {
-        const isMobile = mobileMediaQuery.matches;
         const talentCollapsed = !$('#talentFilterPanel').hasClass('in');
         const detailCollapsed = !$('#detailFilterPanel').hasClass('in');
         const textCollapsed = !$('#textFilterPanel').hasClass('in');
@@ -87,13 +86,13 @@ $(function () {
         const hasKeyword = $('#textFilter').val();
 
         $('#talentPanelTitle').text(
-            isMobile && talentCollapsed ? `タレント：${talentName}` : 'タレント'
+            talentCollapsed ? `タレント：${talentName}` : 'タレント'
         );
         $('#detailPanelTitle').text(
-            isMobile && detailCollapsed && hasFilter && !hasKeyword ? 'フィルタ：設定中' : 'フィルタ'
+            detailCollapsed && hasFilter && !hasKeyword ? 'フィルタ：設定中' : 'フィルタ'
         );
         $('#textPanelTitle').text(
-            isMobile && textCollapsed && hasKeyword ? 'キーワード：設定中' : 'キーワード'
+            textCollapsed && hasKeyword ? 'キーワード：設定中' : 'キーワード'
         );
     }
 
