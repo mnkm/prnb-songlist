@@ -1,3 +1,10 @@
+ .noto-sans-jp-regular {
+  font-family: "Noto Sans JP", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
 /* html, body固定 */
 html,
 body {
@@ -16,10 +23,43 @@ body {
     flex-direction: column;
 }
 
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-title-icon {
+  width: 2.4em;
+  height: 2.4em;
+  flex: 0 0 auto;
+}
+
+.page-title-text {
+  display: block;
+  width: max-content;
+}
+
+.page-title-main,
+.page-title-sub {
+  display: block;
+}
+
+.page-title-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 50%;
+  background-color: var(--accent-color);
+}
+
 /* フィルタ定義 */
 .filter-area {
     flex: 0 0 auto;
     padding-bottom: 10px;
+}
+
+.filter-area label {
+  font-weight: 400;
 }
 
 .filter-panel {
@@ -31,6 +71,7 @@ body {
 .filter-panel > .panel-heading {
   background-color: var(--accent-color);
   border-color: #ddd;
+  font-weight: 700;
 }
 
 .filter-panel .panel-heading {
