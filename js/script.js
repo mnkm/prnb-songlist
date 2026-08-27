@@ -31,15 +31,16 @@ $(function () {
         updateTableAreaHeight();
         const tableArea = $('.table-area');
         const wrapper = tableArea.find('.dataTables_wrapper');
+        const pageLengthControlsHeight = tableArea.find('.page-length-controls').outerHeight(true) || 0;
         if (!wrapper.length) {
-            return Math.max(50, tableArea.innerHeight() - 100);
+            return Math.max(50, tableArea.innerHeight() - pageLengthControlsHeight - 100);
         }
 
         const lengthHeight = wrapper.find('.dataTables_length').outerHeight(true) || 0;
         const scrollHeadHeight = wrapper.find('.dataTables_scrollHead').outerHeight(true) || 0;
         const infoHeight = wrapper.find('.dataTables_info').outerHeight(true) || 0;
         const pagerHeight = wrapper.find('.dataTables_paginate').outerHeight(true) || 0;
-        const controlsHeight = lengthHeight + scrollHeadHeight + infoHeight + pagerHeight;
+        const controlsHeight = pageLengthControlsHeight + lengthHeight + scrollHeadHeight + infoHeight + pagerHeight;
 
         return Math.max(0, tableArea.innerHeight() - controlsHeight);
     }
@@ -68,6 +69,29 @@ $(function () {
     }
 
     let table = null;
+
+    function updatePageLengthButtons() {
+        if (!table) {
+            return;
+        }
+
+        const pageLength = table.page.len();
+        $('.page-length-button').each(function () {
+            const isActive = Number($(this).data('page-length')) === pageLength;
+            $(this)
+                .toggleClass('active', isActive)
+                .attr('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    $('.page-length-button').on('click', function () {
+        if (!table) {
+            return;
+        }
+
+        table.page.len(Number($(this).data('page-length'))).draw();
+        updatePageLengthButtons();
+    });
 
     function getUrlParam(name) {
         const params = new URLSearchParams(window.location.search);
@@ -257,7 +281,8 @@ $(function () {
                     if (!table) {
                         table = $('#grid').DataTable({
                             data: res.rows,
-                            dom: 'lrtip',
+                            dom: 'rtip',
+                            pageLength: 10,
                             scrollY: calcTableHeight() + 'px',
                             scrollCollapse: true,
                             columns: [
@@ -292,7 +317,6 @@ $(function () {
                             language: {
                                 search: "",
                                 searchPlaceholder: "キーワード検索",
-                                lengthMenu: "_MENU_ 件表示",
                                 info: "_TOTAL_ 件中 _START_〜_END_ 件",
                                 paginate: {
                                     first: "最初",
@@ -302,6 +326,7 @@ $(function () {
                                 }
                             }
                         });
+                        updatePageLengthButtons();
                         updateResponsiveColumns();
                         updateTableHeight();
                     } else {

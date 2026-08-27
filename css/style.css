@@ -96,6 +96,31 @@ body {
     flex-direction: column;
 }
 
+.page-length-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.page-length-label {
+  margin-right: 4px;
+}
+
+.page-length-button {
+  width: 52px;
+}
+
+.page-length-button.active,
+.page-length-button.active:hover,
+.page-length-button.active:focus {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: none;
+}
+
 .page-footer {
   position: fixed;
   left: 0;
@@ -182,21 +207,37 @@ table.dataTable tbody tr:hover {
 }
 
 /* ページネーション */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  margin-left: 4px;
+  padding: 6px 0;
+  border: 1px solid #ccc !important;
+  border-radius: 4px;
+  background: #fff !important;
+  color: #333 !important;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: none;
+}
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
   background: var(--accent-color) !important;
   color: #000 !important;
-  border: none;
+  border-color: var(--accent-color) !important;
 }
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
   background: var(--accent-color) !important;
   color: #000 !important;
-  border: 1px solid var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
 }
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
-  background: var(--accent-color) !important;
-  color: #000 !important;
-  border: 1px solid var(--accent-color) !important;
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  background: #fff !important;
+  color: #999 !important;
+  border-color: #ddd !important;
+  cursor: default;
 }
 
 /* セレクト・入力のフォーカス */
