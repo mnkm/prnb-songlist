@@ -113,7 +113,7 @@ $(function () {
             talentCollapsed ? `タレント：${talentName}` : 'タレント'
         );
         $('#detailPanelTitle').text(
-            detailCollapsed && hasFilter && !hasKeyword ? 'フィルタ：設定中' : 'フィルタ'
+            detailCollapsed && hasFilter ? 'フィルタ：設定中' : 'フィルタ'
         );
         $('#textPanelTitle').text(
             textCollapsed && hasKeyword ? 'キーワード：設定中' : 'キーワード'
