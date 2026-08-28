@@ -10,6 +10,114 @@ html,
 body {
     height: 100%;
     overflow: hidden;
+  background-color: var(--page-background);
+  color: var(--text-color);
+}
+
+.theme-switcher {
+  position: fixed;
+  top: 12px;
+  right: 18px;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-color);
+  font-size: 12px;
+}
+
+.theme-toggle {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 26px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.theme-toggle input {
+  position: absolute;
+  opacity: 0;
+}
+
+.theme-toggle-track {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 26px;
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
+  background-color: var(--input-background);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  z-index: 1;
+  display: block;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background-color: #fff;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+}
+
+html[data-theme="light"] .theme-toggle-thumb {
+  left: 3px;
+  background-color: var(--accent-color);
+}
+
+html[data-theme="light"] .theme-toggle-icon-light {
+  left: 5px;
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: #333;
+  transform: translateY(-50%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle-icon-dark {
+  color: var(--accent-color);
+  opacity: 0;
+  transform: translate(20px, -50%);
+}
+
+.theme-toggle input:checked + .theme-toggle-track .theme-toggle-icon-light {
+  opacity: 0;
+  transform: translate(-20px, -50%);
+}
+
+.theme-toggle input:checked + .theme-toggle-track .theme-toggle-icon-dark {
+  opacity: 1;
+}
+
+.theme-toggle input:checked + .theme-toggle-track {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.theme-toggle input:checked + .theme-toggle-track .theme-toggle-thumb {
+  transform: translate(20px, -50%);
+  background-color: #fff;
+}
+
+.theme-toggle input:focus-visible + .theme-toggle-track {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 /* コンテナ定義 */
@@ -33,6 +141,11 @@ body {
   width: 2.4em;
   height: 2.4em;
   flex: 0 0 auto;
+  color: inherit;
+}
+
+.page-title-icon path:nth-child(2) {
+  fill: currentColor;
 }
 
 .page-title-text {
@@ -71,6 +184,7 @@ body {
 .filter-panel > .panel-heading {
   background-color: var(--accent-color);
   border-color: #ddd;
+  color: #000;
   font-weight: 700;
 }
 
@@ -134,6 +248,7 @@ body {
 
 .dataTables_scrollBody {
   min-height: 0;
+    border-radius: 0 0 4px 4px;
     overflow-y: auto !important;
 }
 
@@ -143,6 +258,42 @@ body {
 
 .table-area .dataTables_scroll {
   overflow: hidden;
+  border-radius: 4px;
+}
+
+.table-area .dataTables_scrollHead {
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+}
+
+.table-area .dataTables_scrollHeadInner table {
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+}
+
+.table-area .dataTables_scrollHeadInner table thead th:first-child {
+  border-top-left-radius: 4px !important;
+}
+
+.table-area .dataTables_scrollHeadInner table thead th:last-child {
+  border-top-right-radius: 4px !important;
+}
+
+.table-area .dataTables_scrollBody {
+  border-radius: 0 0 4px 4px;
+}
+
+.table-area .dataTables_scrollBody table {
+  overflow: hidden;
+  border-radius: 0 0 4px 4px;
+}
+
+.table-area .dataTables_scrollBody table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 4px !important;
+}
+
+.table-area .dataTables_scrollBody table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 4px !important;
 }
 
 .table-area .dataTables_info,
@@ -193,12 +344,27 @@ body {
 /* アクセントカラー */
 :root {
   --accent-color: #337ab7;
+  --page-background: #fff;
+  --surface-background: #fff;
+  --text-color: #333;
+  --heading-text-color: #000;
+  --muted-text-color: #777;
+  --border-color: #ddd;
+  --input-background: #fff;
 }
 
 /* テーブルヘッダ */
 table.dataTable thead th {
   background-color: var(--accent-color);
-  color: #000;
+  color: var(--heading-text-color);
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td,
+.dataTables_scrollHeadInner,
+.dataTables_scrollHeadInner table {
+  border-color: var(--border-color) !important;
 }
 
 /* 選択・ホバー */
@@ -341,4 +507,218 @@ table.dataTable tbody tr:hover {
     text-align: center;
     margin-top: 8px;
   }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page-background: #181a1b;
+    --surface-background: #242627;
+    --text-color: #e8e6e3;
+    --heading-text-color: #fff;
+    --muted-text-color: #b8b5b0;
+    --border-color: #4a4d4f;
+    --input-background: #303335;
+  }
+
+  .filter-panel,
+  .filter-panel .panel-body {
+    background-color: var(--surface-background);
+    border-color: var(--border-color);
+  }
+
+  .filter-panel > .panel-heading {
+    border-color: var(--border-color);
+    color: #fff;
+  }
+
+  .page-title-sub {
+    color: #fff;
+  }
+
+  table.dataTable thead th {
+    color: #fff;
+  }
+
+  .form-control,
+  .page-length-button,
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background-color: var(--input-background) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+
+  .form-control::placeholder {
+    color: var(--muted-text-color);
+  }
+
+  .page-length-button.active,
+  .page-length-button.active:hover,
+  .page-length-button.active:focus,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: #fff !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    background-color: var(--surface-background) !important;
+    border-color: var(--border-color) !important;
+    color: var(--muted-text-color) !important;
+  }
+
+  table.dataTable,
+  table.dataTable tbody tr {
+    background-color: var(--surface-background);
+    color: var(--text-color);
+  }
+
+  table.dataTable tbody tr:nth-child(odd) {
+    background-color: #2b2e30;
+  }
+
+  table.dataTable tbody tr:nth-child(even) {
+    background-color: var(--surface-background);
+  }
+
+  table.dataTable tbody tr:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 35%, var(--surface-background));
+  }
+
+  table.dataTable tbody td,
+  table.dataTable thead th,
+  .dataTables_scrollHeadInner,
+  .dataTables_scrollHeadInner table {
+    border-color: var(--border-color) !important;
+  }
+
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate,
+  .page-length-label {
+    color: var(--text-color);
+  }
+
+  .page-footer {
+    background-color: var(--page-background);
+    color: var(--text-color);
+  }
+
+  .page-footer a {
+    color: #8fc7ff;
+  }
+
+  .loading-overlay {
+    background: rgba(24, 26, 27, 0.7);
+  }
+
+  .loading-box {
+    color: var(--text-color);
+  }
+}
+
+html[data-theme="dark"] {
+  --page-background: #181a1b;
+  --surface-background: #242627;
+  --text-color: #e8e6e3;
+  --heading-text-color: #fff;
+  --muted-text-color: #b8b5b0;
+  --border-color: #4a4d4f;
+  --input-background: #303335;
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  --page-background: #fff;
+  --surface-background: #fff;
+  --text-color: #333;
+  --heading-text-color: #000;
+  --muted-text-color: #777;
+  --border-color: #ddd;
+  --input-background: #fff;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--page-background);
+  color: var(--text-color);
+}
+
+html[data-theme="dark"] .filter-panel,
+html[data-theme="dark"] .filter-panel .panel-body {
+  background-color: var(--surface-background);
+  border-color: var(--border-color);
+}
+
+html[data-theme="dark"] .filter-panel > .panel-heading,
+html[data-theme="dark"] .page-title-sub,
+html[data-theme="dark"] table.dataTable thead th {
+  color: var(--heading-text-color);
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .page-length-button,
+html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+  background-color: var(--input-background) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .page-length-button.active,
+html[data-theme="dark"] .page-length-button.active:hover,
+html[data-theme="dark"] .page-length-button.active:focus,
+html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: #fff !important;
+}
+
+html[data-theme="dark"] table.dataTable,
+html[data-theme="dark"] table.dataTable tbody tr,
+html[data-theme="dark"] table.dataTable tbody tr:nth-child(even) {
+  background-color: var(--surface-background);
+  color: var(--text-color);
+}
+
+html[data-theme="dark"] table.dataTable tbody tr:nth-child(odd) {
+  background-color: #2b2e30;
+}
+
+html[data-theme="dark"] .page-footer {
+  background-color: var(--page-background);
+  color: var(--text-color);
+}
+
+html[data-theme="light"] .filter-panel > .panel-heading,
+html[data-theme="light"] .page-title-sub,
+html[data-theme="light"] table.dataTable thead th {
+  color: var(--heading-text-color);
+}
+
+html[data-theme="light"] .page-length-button.active,
+html[data-theme="light"] .page-length-button.active:hover,
+html[data-theme="light"] .page-length-button.active:focus,
+html[data-theme="light"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+html[data-theme="light"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: var(--heading-text-color) !important;
+}
+
+html[data-theme="light"] table.dataTable tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+html[data-theme="light"] table.dataTable tbody tr:nth-child(even) {
+  background-color: var(--surface-background);
+}
+
+html[data-theme="light"] .page-footer a {
+  color: #337ab7;
+}
+
+html[data-theme="light"] .loading-overlay {
+  background: rgba(255, 255, 255, 0.7);
 }

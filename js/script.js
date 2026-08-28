@@ -6,9 +6,61 @@ $(function () {
         hinata: '#ebf8e2',
         ruka: '#d0ccff'
     };
+    const TALENT_COLORS_DARK = {
+        nina: '#9a3f5b',
+        yura: '#2f7f9f',
+        ren: '#a17a25',
+        hinata: '#4e743e',
+        ruka: '#5f5793'
+    };
+
+    const themeToggle = document.querySelector('#themeToggle');
+    const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+    const THEME_STORAGE_KEY = 'songlist-theme';
+
+    function updateThemeSwitcherPosition() {
+        const title = document.querySelector('.page-title');
+        const switcher = document.querySelector('.theme-switcher');
+        if (!title || !switcher) {
+            return;
+        }
+
+        const titleBottom = title.getBoundingClientRect().bottom;
+        switcher.style.top = `${Math.max(0, titleBottom - switcher.offsetHeight)}px`;
+    }
+
+    function isDarkMode() {
+        return document.documentElement.dataset.theme === 'dark';
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.checked = theme === 'dark';
+    }
+
+    function initializeTheme() {
+        const savedTheme = sessionStorage.getItem(THEME_STORAGE_KEY);
+        applyTheme(savedTheme || (systemDarkMode.matches ? 'dark' : 'light'));
+    }
+
+    initializeTheme();
+    updateThemeSwitcherPosition();
+    window.addEventListener('resize', updateThemeSwitcherPosition);
+    if (document.fonts) {
+        document.fonts.ready.then(updateThemeSwitcherPosition);
+    }
+    themeToggle.addEventListener('change', function () {
+        const theme = this.checked ? 'dark' : 'light';
+        sessionStorage.setItem(THEME_STORAGE_KEY, theme);
+        applyTheme(theme);
+        applyAccentColor($('#talentFilter').val());
+    });
 
     function applyAccentColor(talent) {
-        const color = TALENT_COLORS[talent] || '#337ab7';
+        const colors = isDarkMode()
+            ? TALENT_COLORS_DARK
+            : TALENT_COLORS;
+        const color = colors[talent] || '#337ab7';
         document.documentElement.style.setProperty('--accent-color', color);
     }
     function updateTableAreaHeight() {
