@@ -169,7 +169,6 @@ html[data-theme="light"] .theme-toggle-icon-light {
 /* フィルタ定義 */
 .filter-area {
     flex: 0 0 auto;
-    padding-bottom: 10px;
 }
 
 .filter-area label {
