@@ -142,7 +142,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   width: 2.4em;
   height: 2.4em;
   flex: 0 0 auto;
-  color: inherit;
+  color: var(--title-icon-color, #09244BFF);
 }
 
 .page-title-icon path:nth-child(2) {
@@ -351,6 +351,11 @@ html[data-theme="light"] .theme-toggle-icon-light {
   --muted-text-color: #777;
   --border-color: #ddd;
   --input-background: #fff;
+  --title-icon-color: #09244BFF;
+}
+
+html[data-theme="dark"] {
+  --title-icon-color: #edf4ff;
 }
 
 /* テーブルヘッダと罫線 */
