@@ -14,6 +14,7 @@ $(function () {
         ruka: '#5f5793'
     };
 
+    // テーマはシステム設定を初期値とし、手動選択後は同一セッション内で優先する。
     const themeToggle = document.querySelector('#themeToggle');
     const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
     const THEME_STORAGE_KEY = 'songlist-theme';
@@ -39,7 +40,7 @@ $(function () {
     }
 
     function initializeTheme() {
-        const savedTheme = sessionStorage.getItem(THEME_STORAGE_KEY);
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
         applyTheme(savedTheme || (systemDarkMode.matches ? 'dark' : 'light'));
     }
 
@@ -51,12 +52,13 @@ $(function () {
     }
     themeToggle.addEventListener('change', function () {
         const theme = this.checked ? 'dark' : 'light';
-        sessionStorage.setItem(THEME_STORAGE_KEY, theme);
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
         applyTheme(theme);
         applyAccentColor($('#talentFilter').val());
     });
 
     function applyAccentColor(talent) {
+        // テーマに応じた色を選び、CSS側の各コンポーネントへ一括反映する。
         const colors = isDarkMode()
             ? TALENT_COLORS_DARK
             : TALENT_COLORS;
@@ -80,6 +82,7 @@ $(function () {
     }
 
     function calcTableHeight() {
+        // 外部コントロールとDataTablesの補助領域を除き、スクロール領域の高さを算出する。
         updateTableAreaHeight();
         const tableArea = $('.table-area');
         const wrapper = tableArea.find('.dataTables_wrapper');
