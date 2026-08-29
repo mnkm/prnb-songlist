@@ -14,6 +14,7 @@ body {
   color: var(--text-color);
 }
 
+/* タイトル下端に合わせてJavaScriptからtopを設定するテーマスイッチ */
 .theme-switcher {
   position: fixed;
   top: 12px;
@@ -120,7 +121,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   outline-offset: 2px;
 }
 
-/* コンテナ定義 */
+/* ページ全体のレイアウト */
 .container-fluid {
     height: 100%;
 }
@@ -341,7 +342,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
     }
 }
 
-/* アクセントカラー */
+/* ライトモードの既定値。ダークモードや手動テーマで下部から上書きする */
 :root {
   --accent-color: #337ab7;
   --page-background: #fff;
@@ -353,7 +354,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   --input-background: #fff;
 }
 
-/* テーブルヘッダ */
+/* テーブルヘッダと罫線 */
 table.dataTable thead th {
   background-color: var(--accent-color);
   color: var(--heading-text-color);
@@ -509,6 +510,7 @@ table.dataTable tbody tr:hover {
   }
 }
 
+/* システム設定がダークの場合の初期テーマ */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -618,6 +620,7 @@ table.dataTable tbody tr:hover {
   }
 }
 
+/* 手動選択したテーマはシステム設定より優先する */
 html[data-theme="dark"] {
   --page-background: #181a1b;
   --surface-background: #242627;
@@ -721,4 +724,15 @@ html[data-theme="light"] .page-footer a {
 
 html[data-theme="light"] .loading-overlay {
   background: rgba(255, 255, 255, 0.7);
+}
+
+/* DataTablesのセル背景に隠れないよう、hover色を行内のセルにも適用する */
+html[data-theme="light"] table.dataTable tbody tr:hover > *,
+html[data-theme="light"] table.dataTable tbody tr:hover {
+  background-color: color-mix(in srgb, var(--accent-color) 100%, gray) !important;
+}
+
+html[data-theme="dark"] table.dataTable tbody tr:hover > *,
+html[data-theme="dark"] table.dataTable tbody tr:hover {
+  background-color: color-mix(in srgb, var(--accent-color) 35%, var(--surface-background)) !important;
 }
