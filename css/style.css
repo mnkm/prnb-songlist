@@ -351,11 +351,11 @@ html[data-theme="light"] .theme-toggle-icon-light {
   --muted-text-color: #777;
   --border-color: #ddd;
   --input-background: #fff;
-  --title-icon-color: #09244BFF;
+  --title-icon-color: #0F2A4A;
 }
 
 html[data-theme="dark"] {
-  --title-icon-color: #edf4ff;
+  --title-icon-color: #EAF4FF;
 }
 
 /* テーブルヘッダと罫線 */

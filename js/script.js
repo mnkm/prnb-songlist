@@ -54,7 +54,7 @@ $(function () {
             return;
         }
 
-        const color = isDarkMode() ? '#edf4ff' : '#09244BFF';
+        const color = isDarkMode() ? '#EAF4FF' : '#0F2A4A';
         favicon.setAttribute('href', buildPlaylistIconSvg(color));
     }
 
