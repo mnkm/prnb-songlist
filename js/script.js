@@ -16,18 +16,26 @@ $(function () {
 
     // テーマはシステム設定を初期値とし、手動選択後は同一セッション内で優先する。
     const themeToggle = document.querySelector('#themeToggle');
+    const currentThemeMode = document.getElementById('currentThemeMode');
+    const copyFormatInputs = document.querySelectorAll('input[name="copyFormat"]');
+    const menuButton = document.getElementById('menuButton');
+    const sideMenu = document.getElementById('sideMenu');
+    const menuBackdrop = document.getElementById('menuBackdrop');
+    const closeMenuButton = document.getElementById('closeMenuButton');
     const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
     const THEME_STORAGE_KEY = 'songlist-theme';
+    const COPY_FORMAT_STORAGE_KEY = 'songlist-copy-format';
+    const COPY_FORMAT_OPTIONS = ['titleArtist', 'titleOnly'];
 
     function updateThemeSwitcherPosition() {
         const title = document.querySelector('.page-title');
-        const switcher = document.querySelector('.theme-switcher');
-        if (!title || !switcher) {
+        const controls = document.querySelector('.top-controls');
+        if (!title || !controls) {
             return;
         }
 
         const titleBottom = title.getBoundingClientRect().bottom;
-        switcher.style.top = `${Math.max(0, titleBottom - switcher.offsetHeight)}px`;
+        controls.style.top = `${Math.max(0, titleBottom - controls.offsetHeight)}px`;
     }
 
     function isDarkMode() {
@@ -58,10 +66,18 @@ $(function () {
         favicon.setAttribute('href', buildPlaylistIconSvg(color));
     }
 
+    function updateThemeModeLabel() {
+        if (!currentThemeMode) {
+            return;
+        }
+        currentThemeMode.textContent = isDarkMode() ? 'ダークモード' : 'ライトモード';
+    }
+
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         themeToggle.checked = theme === 'dark';
         updateFavicon();
+        updateThemeModeLabel();
     }
 
     function initializeTheme() {
@@ -80,6 +96,69 @@ $(function () {
         localStorage.setItem(THEME_STORAGE_KEY, theme);
         applyTheme(theme);
         applyAccentColor($('#talentFilter').val());
+    });
+
+    function getSelectedCopyFormat() {
+        const selected = document.querySelector('input[name="copyFormat"]:checked');
+        const value = selected ? selected.value : (localStorage.getItem(COPY_FORMAT_STORAGE_KEY) || 'titleArtist');
+        return COPY_FORMAT_OPTIONS.includes(value) ? value : 'titleArtist';
+    }
+
+    function syncCopyFormatSelectionState() {
+        copyFormatInputs.forEach(function (input) {
+            const option = input.closest('.copy-format-option');
+            if (!option) {
+                return;
+            }
+            option.classList.toggle('is-selected', input.checked);
+        });
+    }
+
+    function setMenuOpen(isOpen) {
+        if (!sideMenu || !menuBackdrop || !menuButton) {
+            return;
+        }
+
+        sideMenu.classList.toggle('is-open', isOpen);
+        menuBackdrop.classList.toggle('is-visible', isOpen);
+        sideMenu.setAttribute('aria-hidden', String(!isOpen));
+        menuButton.setAttribute('aria-expanded', String(isOpen));
+        document.body.classList.toggle('menu-open', isOpen);
+    }
+
+    menuButton.addEventListener('click', function () {
+        setMenuOpen(true);
+    });
+
+    closeMenuButton.addEventListener('click', function () {
+        setMenuOpen(false);
+    });
+
+    menuBackdrop.addEventListener('click', function () {
+        setMenuOpen(false);
+    });
+
+    copyFormatInputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+            if (this.checked) {
+                localStorage.setItem(COPY_FORMAT_STORAGE_KEY, this.value);
+            }
+            syncCopyFormatSelectionState();
+        });
+    });
+
+    const savedCopyFormat = localStorage.getItem(COPY_FORMAT_STORAGE_KEY) || 'titleArtist';
+    const validSavedCopyFormat = COPY_FORMAT_OPTIONS.includes(savedCopyFormat) ? savedCopyFormat : 'titleArtist';
+    const copyFormatToSelect = document.querySelector(`input[name="copyFormat"][value="${validSavedCopyFormat}"]`);
+    if (copyFormatToSelect) {
+        copyFormatToSelect.checked = true;
+    }
+    syncCopyFormatSelectionState();
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            setMenuOpen(false);
+        }
     });
 
     function applyAccentColor(talent) {
@@ -248,7 +327,10 @@ $(function () {
             return;
         }
 
-        const text = `${row.title} / ${row.artist}`;
+        const format = getSelectedCopyFormat();
+        const text = format === 'titleOnly'
+            ? row.title
+            : `${row.title} / ${row.artist}`;
         navigator.clipboard.writeText(text)
             .then(function () {
                 showToast(`コピーしました: ${text}`, 'success');
