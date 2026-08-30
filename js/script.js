@@ -430,7 +430,7 @@ $(function () {
         showLoading();
 
         $.getJSON(
-            "https://script.google.com/macros/s/AKfycbwT3lwAbGUwws3WGFdRjrrRVlxNAydG6WuWcpDHGy6QNEk3t5IU-P4flXxWXgXey6se/exec",
+            "https://script.google.com/macros/s/AKfycbw6NVChZtjC0XyC8RILhuCwrHcHuIMBPfZHFgvse24rs3ijqVEEDWOteo4Rpz9W5w/exec",
             { talent: talent }
         )
             .done(
