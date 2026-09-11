@@ -375,6 +375,14 @@ html[data-theme="light"] .theme-toggle-icon-light {
     flex: 0 0 auto;
 }
 
+.filter-area .col-sm-4:nth-child(n+4) {
+  margin-top: 12px;
+}
+
+.filter-area .col-sm-4:last-child {
+  margin-bottom: 3px;
+}
+
 .filter-area label {
   font-weight: 400;
 }
@@ -690,6 +698,10 @@ table.dataTable tbody tr:hover {
     padding-left: 0;
     padding-right: 0;
     margin-bottom: 8px;
+  }
+
+  .filter-area .col-sm-4:nth-child(n+4) {
+    margin-top: 0;
   }
 
   .filter-panel .form-control {

@@ -135,6 +135,13 @@
                 <div class="panel-body">
                     <div class="row filter-area">
                         <div class="col-sm-4">
+                            <label>カテゴリ</label>
+                            <select id="categoryFilter" class="form-control">
+                                <option value="">すべて</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-sm-4">
                             <label>ジャンル</label>
                             <select id="genreFilter" class="form-control">
                                 <option value="">すべて</option>
@@ -189,9 +196,10 @@
                     <tr>
                         <th>楽曲</th>
                         <th>アーティスト</th>
-                        <th>ジャンル</th>
+                        <th>カテゴリ</th>
                     </tr>
                 </thead>
+                <tbody></tbody>
             </table>
         </div>
         <footer class="page-footer">
