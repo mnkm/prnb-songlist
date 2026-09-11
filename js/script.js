@@ -352,8 +352,8 @@ $(function () {
         // ジャンル再生成
         const genres = [...new Set(rows.map(r => r.genre).filter(Boolean))].sort();
         $('#genreFilter').empty().append('<option value="">すべて</option>');
-        genres.forEach(g2 => {
-            $('#genreFilter').append(`<option value="${g2}">${g2}</option>`);
+        genres.forEach(g => {
+            $('#genreFilter').append(`<option value="${g}">${g}</option>`);
         });
 
         // アーティスト再生成
