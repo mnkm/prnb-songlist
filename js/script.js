@@ -260,12 +260,22 @@ $(function () {
     const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
+    // フィルタの id・対応データ項目・DataTables列番号をここで一元管理する。
+    // （増減させる場合はこの配列だけ変更すればよい）
+    const FILTER_DEFS = [
+        { id: '#artistFilter', field: 'artist', column: 1 },
+        { id: '#categoryFilter', field: 'category', column: 2 },
+        { id: '#genreFilter', field: 'genre', column: 3 },
+        { id: '#typeFilter', field: 'type', column: 4 }
+    ];
+    const FILTER_SELECTOR = FILTER_DEFS.map(f => f.id).join(', ');
+
     function updateFilterPanelTitles() {
         const talentCollapsed = !$('#talentFilterPanel').hasClass('in');
         const detailCollapsed = !$('#detailFilterPanel').hasClass('in');
         const textCollapsed = !$('#textFilterPanel').hasClass('in');
         const talentName = $('#talentFilter option:selected').text();
-        const hasFilter = $('#categoryFilter').val() || $('#genreFilter').val() || $('#artistFilter').val() || $('#typeFilter').val();
+        const hasFilter = FILTER_DEFS.some(f => $(f.id).val());
         const hasKeyword = $('#textFilter').val();
 
         $('#talentPanelTitle').text(
@@ -281,10 +291,7 @@ $(function () {
 
     function resetFilters() {
         // セレクト初期化
-        $('#categoryFilter').val('');
-        $('#genreFilter').val('');
-        $('#artistFilter').val('');
-        $('#typeFilter').val('');
+        FILTER_DEFS.forEach(f => $(f.id).val(''));
         $('#textFilter').val('');
 
         if (table) {
@@ -342,67 +349,26 @@ $(function () {
     });
 
     function rebuildFilters(rows) {
-        // カテゴリ再生成
-        const categories = [...new Set(rows.map(r => r.category).filter(Boolean))].sort();
-        $('#categoryFilter').empty().append('<option value="">すべて</option>');
-        categories.forEach(c => {
-            $('#categoryFilter').append(`<option value="${c}">${c}</option>`);
-        });
-        
-        // ジャンル再生成
-        const genres = [...new Set(rows.map(r => r.genre).filter(Boolean))].sort();
-        $('#genreFilter').empty().append('<option value="">すべて</option>');
-        genres.forEach(g => {
-            $('#genreFilter').append(`<option value="${g}">${g}</option>`);
-        });
-
-        // アーティスト再生成
-        const artists = [...new Set(rows.map(r => r.artist).filter(Boolean))].sort();
-        $('#artistFilter').empty().append('<option value="">すべて</option>');
-        artists.forEach(a => {
-            $('#artistFilter').append(`<option value="${a}">${a}</option>`);
-        });
-
-        // 種類再生成
-        const types = [...new Set(rows.map(r => r.type).filter(Boolean))].sort();
-        $('#typeFilter').empty().append('<option value="">すべて</option>');
-        types.forEach(t => {
-            $('#typeFilter').append(`<option value="${t}">${t}</option>`);
+        FILTER_DEFS.forEach(f => {
+            const values = [...new Set(rows.map(r => r[f.field]).filter(Boolean))].sort();
+            const $select = $(f.id).empty().append('<option value="">すべて</option>');
+            values.forEach(v => {
+                $select.append(`<option value="${v}">${v}</option>`);
+            });
         });
     }
 
     function applyFilters() {
-        const category = $('#categoryFilter').val();
-        const genre = $('#genreFilter').val();
-        const artist = $('#artistFilter').val();
-        const type = $('#typeFilter').val();
-        const text = $('#textFilter').val();
+        FILTER_DEFS.forEach(f => {
+            const value = $(f.id).val();
+            table.column(f.column).search(
+                value ? '^' + $.fn.dataTable.util.escapeRegex(value) + '$' : '',
+                true,
+                false
+            );
+        });
 
-        table.column(1).search(
-            artist ? '^' + $.fn.dataTable.util.escapeRegex(artist) + '$' : '',
-            true,
-            false
-        );
-        
-        table.column(2).search(
-            category ? '^' + $.fn.dataTable.util.escapeRegex(category) + '$' : '',
-            true,
-            false
-        );
-        
-        table.column(3).search(
-            genre ? '^' + $.fn.dataTable.util.escapeRegex(genre) + '$' : '',
-            true,
-            false
-        );
-
-        table.column(4).search(
-            type ? '^' + $.fn.dataTable.util.escapeRegex(type) + '$' : '',
-            true,
-            false
-        );
-
-        table.search(text).draw();
+        table.search($('#textFilter').val()).draw();
     }
 
     function updateResponsiveColumns() {
@@ -529,6 +495,7 @@ $(function () {
 
                         // 初期フィルタ適用
                         applyFilters();
+                        updateFilterPanelTitles();
                     } else {
                         updateUrlTalent(talent);
                     }
@@ -569,8 +536,8 @@ $(function () {
         });
 
         // フィルタ操作
-        $('#categoryFilter, #genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
-        $('#categoryFilter, #genreFilter, #artistFilter, #typeFilter').on('change', updateFilterPanelTitles);
+        $(FILTER_SELECTOR).on('change', applyFilters);
+        $(FILTER_SELECTOR).on('change', updateFilterPanelTitles);
         $('#textFilter').on('input', function () {
             applyFilters();
             updateFilterPanelTitles();
