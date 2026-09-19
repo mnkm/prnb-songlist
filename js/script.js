@@ -353,7 +353,7 @@ $(function () {
             const values = [...new Set(rows.map(r => r[f.field]).filter(Boolean))].sort();
             const $select = $(f.id).empty().append('<option value="">すべて</option>');
             values.forEach(v => {
-                $select.append(`<option value="${v}">${v}</option>`);
+                $select.append($('<option>').val(v).text(v));
             });
         });
     }
@@ -429,32 +429,36 @@ $(function () {
                             scrollY: calcTableHeight() + 'px',
                             scrollCollapse: true,
                             columns: [
-                                { data: 'title', title: '楽曲' },
-                                { data: 'artist', title: 'アーティスト' },
-                                { data: 'category', title: 'カテゴリ' },
+                                { data: 'title', title: '楽曲', render: $.fn.dataTable.render.text() },
+                                { data: 'artist', title: 'アーティスト', render: $.fn.dataTable.render.text() },
+                                { data: 'category', title: 'カテゴリ', render: $.fn.dataTable.render.text() },
 
                                 // 非表示だが検索対象
                                 {
                                     data: 'genre',
                                     visible: false,
-                                    searchable: true
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
                                 },
                                 {
                                     data: 'type',
                                     visible: false,
-                                    searchable: true
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
                                 },
                                 {
                                     data: 'reading',
                                     visible: false,
-                                    searchable: true
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
                                 },
 
                                 // いまのところ不要
                                 {
                                     data: 'latest',
                                     visible: false,
-                                    searchable: false
+                                    searchable: false,
+                                    render: $.fn.dataTable.render.text()
                                 }
                             ],
 
