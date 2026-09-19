@@ -455,7 +455,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   z-index: 1000;
   padding: 8px 15px;
   background-color: #fff;
-  text-align: left;
+  text-align: center;
 }
 
 .dataTables_scrollBody {
