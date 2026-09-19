@@ -61,5 +61,5 @@ python -m http.server 8000
 
 ## クレジット
 
-- Created by [@o2i_5](https://x.com/o2i_5)
-- Datad by [@Shigure_1764](https://x.com/Shigure_1764)
+- Create: [@o2i_5](https://x.com/o2i_5)
+- Data: [@Shigure_1764](https://x.com/Shigure_1764)
