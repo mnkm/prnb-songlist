@@ -1,0 +1,21 @@
+{
+  "name": "prnb-songlist",
+  "private": true,
+  "version": "1.0.0",
+  "description": "PROJECT NEBULA タレント別楽曲リスト（静的サイト + データ供給用GAS）",
+  "scripts": {
+    "gas:login": "clasp login",
+    "gas:logout": "clasp logout",
+    "gas:clone": "cd gas && clasp clone 1WbtgJ2MVyU_T_I0_yAHClMSnx0Nl9l49x0Q035p4ASWnDXSz4WBlDK2l",
+    "gas:pull": "cd gas && clasp pull",
+    "gas:push": "cd gas && clasp push",
+    "gas:status": "cd gas && clasp status",
+    "gas:open": "cd gas && clasp open-script",
+    "gas:deploy": "cd gas && clasp deploy",
+    "gas:deployments": "cd gas && clasp deployments",
+    "gas:logs": "cd gas && clasp logs"
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.4.1"
+  }
+}

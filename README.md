@@ -29,13 +29,16 @@ VTuberグループ「PROJECT NEBULA」所属タレントの持ち歌・カバー
 ├── index.html      # ページ本体・フィルタUI
 ├── css/
 │   └── style.css   # スタイル（ライト/ダークテーマ対応）
-└── js/
-    └── script.js   # フィルタ・DataTables制御・データ取得ロジック
+├── js/
+│   └── script.js   # フィルタ・DataTables制御・データ取得ロジック
+└── gas/            # データ供給用GAS（Google Apps Script）のソース（clasp管理）
 ```
 
 ## データソースについて
 
 楽曲データは本リポジトリには含まれておらず、Google スプレッドシートで管理されたデータを Google Apps Script（GAS）のWebアプリ経由でJSON取得しています（`js/script.js` 内の `loadTable()` を参照）。データの追加・修正はスプレッドシート側で行われます。
+
+このGASのソースコードは [`gas/`](./gas/) ディレクトリで [clasp](https://github.com/google/clasp) を使って管理しています。開発環境のセットアップ手順は [gas/README.md](./gas/README.md) を参照してください。
 
 ## ローカルでの動作確認
 
