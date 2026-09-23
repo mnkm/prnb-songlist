@@ -66,18 +66,10 @@ $(function () {
         favicon.setAttribute('href', buildPlaylistIconSvg(color));
     }
 
-    function updateThemeModeLabel() {
-        if (!currentThemeMode) {
-            return;
-        }
-        currentThemeMode.textContent = isDarkMode() ? 'ダークモード' : 'ライトモード';
-    }
-
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         themeToggle.checked = theme === 'dark';
         updateFavicon();
-        updateThemeModeLabel();
     }
 
     function initializeTheme() {
