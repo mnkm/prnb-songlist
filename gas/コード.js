@@ -81,27 +81,30 @@ function createJsonResponse(data) {
  * メイン処理
  */
 function doGet(e) {
-  const talent = e.parameter.talent || 'nina';
-  const cache = CacheService.getScriptCache();
-  const cacheKey = `songlist_${talent}`;
-  const cacheExpiration = 300;
+  try {
+    return getSongList(e);
+  } catch (error) {
+    // 例外の詳細はログにのみ残し、
+    // レスポンスには固定のエラーを返す
+    console.error(
+      'doGet failed: ' + error
+    );
 
-  // ========================================
-  // 1. キャッシュから取得
-  // ========================================
-  const cached = getLargeCache(
-    cache,
-    cacheKey
-  );
-
-  if (cached) {
-    return ContentService
-      .createTextOutput(cached)
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJsonResponse({
+      rows: [],
+      error: 'internal_error'
+    });
   }
+}
+
+
+/**
+ * 楽曲リストをJSONレスポンスとして取得
+ */
+function getSongList(e) {
 
   // ========================================
-  // 2. タレント別設定
+  // 1. タレント別設定
   // ========================================
 
   const talentMap = {
@@ -119,11 +122,34 @@ function doGet(e) {
     }
   };
 
-  const config = talentMap[talent];
-  if (!config) {
+  const talent = (e && e.parameter && e.parameter.talent) || 'nina';
+
+  // 許可リストにないタレントは
+  // キャッシュにもスプレッドシートにも触れずに返す
+  // (constructor 等の継承プロパティを除外するため hasOwnProperty で判定)
+  if (!Object.prototype.hasOwnProperty.call(talentMap, talent)) {
     return createJsonResponse({
       rows: []
     });
+  }
+
+  const config = talentMap[talent];
+  const cache = CacheService.getScriptCache();
+  const cacheKey = `songlist_${talent}`;
+  const cacheExpiration = 300;
+
+  // ========================================
+  // 2. キャッシュから取得
+  // ========================================
+  const cached = getLargeCache(
+    cache,
+    cacheKey
+  );
+
+  if (cached) {
+    return ContentService
+      .createTextOutput(cached)
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   // ========================================
@@ -153,8 +179,7 @@ function doGet(e) {
     "アーティスト": "artist",
     "カテゴリ": "category",
     "ジャンル": "genre",
-    "種類": "type",
-    "最終歌唱日": "latest"
+    "種類": "type"
   };
 
   const header = values.shift();

@@ -36,12 +36,17 @@ npm run gas:open
 # 現在のデプロイ一覧を確認
 npm run gas:deployments
 
-# 新しいデプロイを作成（Webアプリの公開URLを更新する場合）
+# 既存デプロイを新しいバージョンに更新（公開URLは変わらない）
+npm run gas:deploy -- -i <デプロイID>
+
+# 新しいデプロイを作成（公開URLが新しく発行される）
 npm run gas:deploy
 ```
 
 ## 注意事項
 
-- Webアプリとして公開されている `exec` URL（`js/script.js` の `loadTable()` 内で参照）は、デプロイ（`clasp deploy` もしくはスクリプトエディタからの「デプロイを管理」）を新規作成しない限り変わりません。既存デプロイの中身を更新したいだけの場合は `clasp push` のみで反映されます。
+- Webアプリとして公開されている `exec` URL（`js/script.js` の `loadTable()` 内で参照）は、デプロイ（`clasp deploy` もしくはスクリプトエディタからの「デプロイを管理」）を新規作成しない限り変わりません。
+- `clasp push` だけでは公開中の `exec` URL には反映されません（反映されるのはスクリプトエディタ上のコードとテスト用の `dev` URL のみ）。公開中のWebアプリに反映するには、push 後に既存デプロイを新しいバージョンへ更新してください（`npm run gas:deploy -- -i <デプロイID>`、もしくは「デプロイを管理」→ 編集 → 新バージョン）。デプロイIDは `npm run gas:deployments` で確認できます。
+- `appsscript.json` の `oauthScopes` を変更した場合は、スクリプトエディタで一度関数を実行して権限を承認し直す必要があります。
 - `gas/.clasp.json` にはスクリプトIDが含まれますが秘匿情報ではないため、リポジトリにコミットして構いません（認証情報である `.clasprc.json` とは別物です）。
 - スプレッドシート側のデータそのものはこのリポジトリでは管理していません。

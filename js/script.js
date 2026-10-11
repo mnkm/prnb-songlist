@@ -250,6 +250,9 @@ $(function () {
     }
 
     const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
+
+    // 楽曲データとして扱う項目
+    const ROW_FIELDS = ['title', 'artist', 'category', 'genre', 'type', 'reading'];
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
     // フィルタの id・対応データ項目・DataTables列番号をここで一元管理する。
@@ -398,6 +401,23 @@ $(function () {
         table.columns.adjust();
     }
 
+    // 表示に使う項目だけを取り出し、すべて文字列に揃える
+    // (render.text() は文字列以外をエスケープしないため)
+    function normalizeRows(rows) {
+        if (!Array.isArray(rows)) {
+            return [];
+        }
+
+        return rows.map(row => {
+            const normalized = {};
+            ROW_FIELDS.forEach(field => {
+                const value = row ? row[field] : null;
+                normalized[field] = value == null ? '' : String(value);
+            });
+            return normalized;
+        });
+    }
+
     function loadTable(talent, type) {
         applyAccentColor(talent);
         showLoading();
@@ -409,13 +429,21 @@ $(function () {
             .done(
                 function (res) {
 
+                    // GAS側でエラーになった場合
+                    if (res.error) {
+                        alert('データの取得に失敗しました');
+                        return;
+                    }
+
+                    const rows = normalizeRows(res.rows);
+
                     // フィルタ初期化（重要）
                     resetFilters();
 
                     // DataTable を変数に保持
                     if (!table) {
                         table = $('#grid').DataTable({
-                            data: res.rows,
+                            data: rows,
                             dom: 'rtip',
                             pageLength: 10,
                             scrollY: calcTableHeight() + 'px',
@@ -443,14 +471,6 @@ $(function () {
                                     visible: false,
                                     searchable: true,
                                     render: $.fn.dataTable.render.text()
-                                },
-
-                                // いまのところ不要
-                                {
-                                    data: 'latest',
-                                    visible: false,
-                                    searchable: false,
-                                    render: $.fn.dataTable.render.text()
                                 }
                             ],
 
@@ -475,14 +495,14 @@ $(function () {
                         updateTableHeight();
                     } else {
                         table.clear();
-                        table.rows.add(res.rows);
+                        table.rows.add(rows);
                         table.draw();
                         updateResponsiveColumns();
                         updateTableHeight();
                     }
 
                     // プルダウン再構築
-                    rebuildFilters(res.rows);
+                    rebuildFilters(rows);
                     updateFilterPanelTitles();
 
                     // 条件：type指定がrequestの場合
@@ -525,11 +545,6 @@ $(function () {
         // 初期表示
         applyAccentColor(initialTalent);
         loadTable($('#talentFilter').val(), urlType);
-
-        // タレント変更時
-        $('#talentFilter').on('change', function () {
-            loadTable(this.value);
-        });
 
         // フィルタ操作
         $(FILTER_SELECTOR).on('change', applyFilters);
