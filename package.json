@@ -1,0 +1,15 @@
+{
+  "name": "prnb-songlist",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/copy-vendor.mjs",
+    "prepare": "npm run vendor"
+  },
+  "dependencies": {
+    "bootstrap": "3.4.1",
+    "datatables.net": "1.13.8",
+    "datatables.net-dt": "1.13.8",
+    "jquery": "3.7.1"
+  }
+}
