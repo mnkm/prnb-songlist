@@ -15,12 +15,12 @@ VTuberグループ「PROJECT NEBULA」所属タレントの持ち歌・カバー
 
 ## 技術スタック
 
-ビルドツールを使わない素のHTML/CSS/JavaScriptです。
+バンドラーやトランスパイラを使わない素のHTML/CSS/JavaScriptです。ライブラリはnpmで管理し、公開時に `vendor/` へコピーします。
 
 - jQuery 3.7.1
 - Bootstrap 3.4.1
 - DataTables 1.13.8
-- 上記はすべてCDN（jsDelivr）から読み込み、SRI（Subresource Integrity）を付与
+- 上記はすべてnpmで管理（版は `package.json` と `package-lock.json` で固定）。CDNを使わず、同一オリジンの `vendor/` から読み込み
 
 ## ディレクトリ構成
 
@@ -31,6 +31,9 @@ VTuberグループ「PROJECT NEBULA」所属タレントの持ち歌・カバー
 │   └── style.css   # スタイル（ライト/ダークテーマ対応）
 ├── js/
 │   └── script.js   # フィルタ・DataTables制御・データ取得ロジック
+├── scripts/
+│   └── copy-vendor.mjs  # ライブラリを node_modules から vendor/ へコピーする
+├── vendor/         # npmからコピーされるライブラリ（リポジトリには含めない）
 └── gas/            # データ供給用GAS（Google Apps Script）のソース（clasp管理）
 ```
 
@@ -42,9 +45,10 @@ VTuberグループ「PROJECT NEBULA」所属タレントの持ち歌・カバー
 
 ## ローカルでの動作確認
 
-ビルド不要の静的サイトのため、任意の静的サーバーで配信するだけで動作します。
+初回と、ライブラリを更新したときに `npm install` を実行します（`vendor/` へのコピーまで行われます）。そのあと、任意の静的サーバーで配信します。
 
 ```bash
+npm install
 npx serve .
 # もしくは
 python -m http.server 8000
@@ -59,7 +63,7 @@ python -m http.server 8000
 ## セキュリティ
 
 - 外部データ（スプレッドシート由来のテキスト）はDataTablesの `render: $.fn.dataTable.render.text()` によりHTMLエスケープした上で描画しています。フィルタのプルダウン選択肢もDOM APIで安全に生成しています
-- CDNから読み込むライブラリにはSRI（`integrity`/`crossorigin`）を設定しています
+- ライブラリはCDNから読み込まず、npmで管理して同一オリジンから配信しています。脆弱性はGitHubのDependabotで検知します
 - `Content-Security-Policy` を `index.html` に設定し、想定外のスクリプト・スタイル・通信先を制限しています
 
 ## クレジット

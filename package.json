@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "PROJECT NEBULA タレント別楽曲リスト（静的サイト + データ供給用GAS）",
   "scripts": {
+    "vendor": "node scripts/copy-vendor.mjs",
+    "prepare": "npm run vendor",
     "gas:login": "clasp login",
     "gas:logout": "clasp logout",
     "gas:clone": "cd gas && clasp clone 1WbtgJ2MVyU_T_I0_yAHClMSnx0Nl9l49x0Q035p4ASWnDXSz4WBlDK2l",
@@ -14,6 +16,12 @@
     "gas:deploy": "cd gas && clasp deploy",
     "gas:deployments": "cd gas && clasp deployments",
     "gas:logs": "cd gas && clasp logs"
+  },
+  "dependencies": {
+    "bootstrap": "3.4.1",
+    "datatables.net": "1.13.8",
+    "datatables.net-dt": "1.13.8",
+    "jquery": "3.7.1"
   },
   "devDependencies": {
     "@google/clasp": "^3.4.1"
