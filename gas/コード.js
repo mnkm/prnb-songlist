@@ -112,12 +112,20 @@ function getSongList(e) {
       spreadsheetId: '10sodqHlGwp_ROuf5afdSPMvbDQmulFOw-K_hDK3WhiQ',
       sheetName: '楽曲'
     },
+    yura: {
+      spreadsheetId: '1GjdSUL9jzsJbPyZp3AjgB8NhrA774fVJ93FbwiPpzmU',
+      sheetName: '楽曲'
+    },
     ren: {
       spreadsheetId: '1hBqpD1i0Nnvt5UO2zeyl8PQz7A4tKZ4tRofeEh1TNtY',
       sheetName: '楽曲'
     },
     hinata: {
       spreadsheetId: '1WjWJv4W2ueg-jf5VdxLKYY85aX2wQSoQ9G6AEh0hS30',
+      sheetName: '楽曲'
+    },
+    ruka: {
+      spreadsheetId: '1mK3OPbXCY5uNHKkZw1jYmUjSoJOuWhbSntezwJhxVfo',
       sheetName: '楽曲'
     }
   };
