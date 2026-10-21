@@ -66,18 +66,10 @@ $(function () {
         favicon.setAttribute('href', buildPlaylistIconSvg(color));
     }
 
-    function updateThemeModeLabel() {
-        if (!currentThemeMode) {
-            return;
-        }
-        currentThemeMode.textContent = isDarkMode() ? 'ダークモード' : 'ライトモード';
-    }
-
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         themeToggle.checked = theme === 'dark';
         updateFavicon();
-        updateThemeModeLabel();
     }
 
     function initializeTheme() {
@@ -258,14 +250,27 @@ $(function () {
     }
 
     const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
+
+    // 楽曲データとして扱う項目
+    const ROW_FIELDS = ['title', 'artist', 'category', 'genre', 'type', 'reading'];
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
+
+    // フィルタの id・対応データ項目・DataTables列番号をここで一元管理する。
+    // （増減させる場合はこの配列だけ変更すればよい）
+    const FILTER_DEFS = [
+        { id: '#artistFilter', field: 'artist', column: 1 },
+        { id: '#categoryFilter', field: 'category', column: 2 },
+        { id: '#genreFilter', field: 'genre', column: 3 },
+        { id: '#typeFilter', field: 'type', column: 4 }
+    ];
+    const FILTER_SELECTOR = FILTER_DEFS.map(f => f.id).join(', ');
 
     function updateFilterPanelTitles() {
         const talentCollapsed = !$('#talentFilterPanel').hasClass('in');
         const detailCollapsed = !$('#detailFilterPanel').hasClass('in');
         const textCollapsed = !$('#textFilterPanel').hasClass('in');
         const talentName = $('#talentFilter option:selected').text();
-        const hasFilter = $('#genreFilter').val() || $('#artistFilter').val() || $('#typeFilter').val();
+        const hasFilter = FILTER_DEFS.some(f => $(f.id).val());
         const hasKeyword = $('#textFilter').val();
 
         $('#talentPanelTitle').text(
@@ -281,9 +286,7 @@ $(function () {
 
     function resetFilters() {
         // セレクト初期化
-        $('#genreFilter').val('');
-        $('#artistFilter').val('');
-        $('#typeFilter').val('');
+        FILTER_DEFS.forEach(f => $(f.id).val(''));
         $('#textFilter').val('');
 
         if (table) {
@@ -341,53 +344,26 @@ $(function () {
     });
 
     function rebuildFilters(rows) {
-        // ジャンル再生成
-        const genres = [...new Set(rows.map(r => r.genre).filter(Boolean))].sort();
-        $('#genreFilter').empty().append('<option value="">すべて</option>');
-        genres.forEach(g => {
-            $('#genreFilter').append(`<option value="${g}">${g}</option>`);
-        });
-
-        // アーティスト再生成
-        const artists = [...new Set(rows.map(r => r.artist).filter(Boolean))].sort();
-        $('#artistFilter').empty().append('<option value="">すべて</option>');
-        artists.forEach(a => {
-            $('#artistFilter').append(`<option value="${a}">${a}</option>`);
-        });
-
-        // 種類再生成
-        const types = [...new Set(rows.map(r => r.type).filter(Boolean))].sort();
-        $('#typeFilter').empty().append('<option value="">すべて</option>');
-        types.forEach(a => {
-            $('#typeFilter').append(`<option value="${a}">${a}</option>`);
+        FILTER_DEFS.forEach(f => {
+            const values = [...new Set(rows.map(r => r[f.field]).filter(Boolean))].sort();
+            const $select = $(f.id).empty().append('<option value="">すべて</option>');
+            values.forEach(v => {
+                $select.append($('<option>').val(v).text(v));
+            });
         });
     }
 
     function applyFilters() {
-        const genre = $('#genreFilter').val();
-        const artist = $('#artistFilter').val();
-        const type = $('#typeFilter').val();
-        const text = $('#textFilter').val();
+        FILTER_DEFS.forEach(f => {
+            const value = $(f.id).val();
+            table.column(f.column).search(
+                value ? '^' + $.fn.dataTable.util.escapeRegex(value) + '$' : '',
+                true,
+                false
+            );
+        });
 
-        table.column(1).search(
-            artist ? '^' + $.fn.dataTable.util.escapeRegex(artist) + '$' : '',
-            true,
-            false
-        );
-        
-        table.column(2).search(
-            genre ? '^' + $.fn.dataTable.util.escapeRegex(genre) + '$' : '',
-            true,
-            false
-        );
-
-        table.column(3).search(
-            type ? '^' + $.fn.dataTable.util.escapeRegex(type) + '$' : '',
-            true,
-            false
-        );
-
-        table.search(text).draw();
+        table.search($('#textFilter').val()).draw();
     }
 
     function updateResponsiveColumns() {
@@ -425,16 +401,41 @@ $(function () {
         table.columns.adjust();
     }
 
+    // 表示に使う項目だけを取り出し、すべて文字列に揃える
+    // (render.text() は文字列以外をエスケープしないため)
+    function normalizeRows(rows) {
+        if (!Array.isArray(rows)) {
+            return [];
+        }
+
+        return rows.map(row => {
+            const normalized = {};
+            ROW_FIELDS.forEach(field => {
+                const value = row ? row[field] : null;
+                normalized[field] = value == null ? '' : String(value);
+            });
+            return normalized;
+        });
+    }
+
     function loadTable(talent, type) {
         applyAccentColor(talent);
         showLoading();
 
         $.getJSON(
-            "https://script.google.com/macros/s/AKfycbw6NVChZtjC0XyC8RILhuCwrHcHuIMBPfZHFgvse24rs3ijqVEEDWOteo4Rpz9W5w/exec",
+            "https://script.google.com/macros/s/AKfycbx61e698leQlyLWXTTND-YgOTfV2lNB1YBKLgtJfBAmUOL2XTq1A3uW2AnSIck0WCm-5Q/exec",
             { talent: talent }
         )
             .done(
                 function (res) {
+
+                    // GAS側でエラーになった場合
+                    if (res.error) {
+                        alert('データの取得に失敗しました');
+                        return;
+                    }
+
+                    const rows = normalizeRows(res.rows);
 
                     // フィルタ初期化（重要）
                     resetFilters();
@@ -442,33 +443,34 @@ $(function () {
                     // DataTable を変数に保持
                     if (!table) {
                         table = $('#grid').DataTable({
-                            data: res.rows,
+                            data: rows,
                             dom: 'rtip',
                             pageLength: 10,
                             scrollY: calcTableHeight() + 'px',
                             scrollCollapse: true,
                             columns: [
-                                { data: 'title', title: '楽曲' },
-                                { data: 'artist', title: 'アーティスト' },
-                                { data: 'genre', title: 'ジャンル' },
+                                { data: 'title', title: '楽曲', render: $.fn.dataTable.render.text() },
+                                { data: 'artist', title: 'アーティスト', render: $.fn.dataTable.render.text() },
+                                { data: 'category', title: 'カテゴリ', render: $.fn.dataTable.render.text() },
 
                                 // 非表示だが検索対象
                                 {
+                                    data: 'genre',
+                                    visible: false,
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
+                                },
+                                {
                                     data: 'type',
                                     visible: false,
-                                    searchable: true
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
                                 },
                                 {
                                     data: 'reading',
                                     visible: false,
-                                    searchable: true
-                                },
-
-                                // いまのところ不要
-                                {
-                                    data: 'content',
-                                    visible: false,
-                                    searchable: false
+                                    searchable: true,
+                                    render: $.fn.dataTable.render.text()
                                 }
                             ],
 
@@ -493,22 +495,14 @@ $(function () {
                         updateTableHeight();
                     } else {
                         table.clear();
-                        table.rows.add(res.rows);
+                        table.rows.add(rows);
                         table.draw();
                         updateResponsiveColumns();
                         updateTableHeight();
                     }
 
-                    // DataTablesが生成した検索ボックスを移動
-                    $('#grid_filter').appendTo('#tableSearch');
-
-                    // テキスト検索（全列対象）
-                    $('#textFilter').on('input', function () {
-                        table.search(this.value).draw();
-                    });
-
                     // プルダウン再構築
-                    rebuildFilters(res.rows);
+                    rebuildFilters(rows);
                     updateFilterPanelTitles();
 
                     // 条件：type指定がrequestの場合
@@ -517,6 +511,7 @@ $(function () {
 
                         // 初期フィルタ適用
                         applyFilters();
+                        updateFilterPanelTitles();
                     } else {
                         updateUrlTalent(talent);
                     }
@@ -551,14 +546,9 @@ $(function () {
         applyAccentColor(initialTalent);
         loadTable($('#talentFilter').val(), urlType);
 
-        // タレント変更時
-        $('#talentFilter').on('change', function () {
-            loadTable(this.value);
-        });
-
         // フィルタ操作
-        $('#genreFilter, #artistFilter, #typeFilter').on('change', applyFilters);
-        $('#genreFilter, #artistFilter, #typeFilter').on('change', updateFilterPanelTitles);
+        $(FILTER_SELECTOR).on('change', applyFilters);
+        $(FILTER_SELECTOR).on('change', updateFilterPanelTitles);
         $('#textFilter').on('input', function () {
             applyFilters();
             updateFilterPanelTitles();

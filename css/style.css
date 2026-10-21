@@ -241,6 +241,12 @@ html[data-theme="light"] .theme-toggle-icon-light {
   text-transform: uppercase;
 }
 
+.side-menu-about {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .side-menu-theme-control {
   display: flex;
   align-items: center;
@@ -337,6 +343,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
 }
 
 .page-title {
+  font-size: 24px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -373,6 +380,14 @@ html[data-theme="light"] .theme-toggle-icon-light {
 /* フィルタ定義 */
 .filter-area {
     flex: 0 0 auto;
+}
+
+.filter-area .col-sm-4:nth-child(n+4) {
+  margin-top: 12px;
+}
+
+.filter-area .col-sm-4:last-child {
+  margin-bottom: 3px;
 }
 
 .filter-area label {
@@ -447,7 +462,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   z-index: 1000;
   padding: 8px 15px;
   background-color: #fff;
-  text-align: left;
+  text-align: center;
 }
 
 .dataTables_scrollBody {
@@ -665,7 +680,7 @@ table.dataTable tbody tr:hover {
     padding-right: 10px;
   }
 
-  .page-wrapper > h3 {
+  .page-wrapper > h1 {
     font-size: 20px;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -690,6 +705,10 @@ table.dataTable tbody tr:hover {
     padding-left: 0;
     padding-right: 0;
     margin-bottom: 8px;
+  }
+
+  .filter-area .col-sm-4:nth-child(n+4) {
+    margin-top: 0;
   }
 
   .filter-panel .form-control {
