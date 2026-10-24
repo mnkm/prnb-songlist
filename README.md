@@ -2,7 +2,7 @@
 
 VTuberグループ「PROJECT NEBULA」所属タレントの持ち歌・カバー曲を、タレント別に検索・絞り込みできる静的Webサイトです。
 
-公開URL: https://mnkm.github.io/prnb-songlist/
+公開URL: https://mnkm.page/prnb-songlist/
 
 ## 主な機能
 
@@ -58,7 +58,9 @@ python -m http.server 8000
 
 ## デプロイ
 
-`main` ブランチへの反映内容が GitHub Pages（`https://mnkm.github.io/prnb-songlist/`）でそのまま公開されます。
+`main` ブランチへの反映内容を Cloudflare Pages がビルドして公開し、`https://mnkm.page/prnb-songlist/` で配信されます。ビルドでは `npm install` が `vendor/` を作ります（`scripts/copy-vendor.mjs`）。以前の GitHub Pages の URL（`https://mnkm.github.io/prnb-songlist/`）は、`mnkm.page` へ転送されます。
+
+GAS（`gas/`）の変更は、このデプロイでは公開されません。`npm run gas:push` のあと、既存のデプロイを新しいバージョンに更新します（[gas/README.md](./gas/README.md)）。
 
 ## セキュリティ
 

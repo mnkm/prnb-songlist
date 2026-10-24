@@ -1,35 +1,41 @@
-// CacheService 1チャンクあたりのサイズ
-// 上限ギリギリを避けるため80KB程度にする
-const CACHE_CHUNK_SIZE = 80 * 1024;
+// CacheService 1チャンクあたりの文字数
+// CacheService の値の上限は 100KB(バイト数)。日本語は UTF-8 で 1 文字 3 バイトになるので、
+// 文字数で 80K にすると上限を超えて保存に失敗する。3 バイトの文字だけでも 90KB に収まる 30,000 文字にする
+const CACHE_CHUNK_CHARS = 30000;
 
 /**
- * 大きな文字列を分割してCacheServiceへ保存
+ * 文字列を、CACHE_CHUNK_CHARS 文字ずつに分ける。
+ * 絵文字など 2 つで 1 文字を表す文字(サロゲートペア)の間では切らない
+ * (片方だけのチャンクは保存のときに壊れ、つなげても元に戻らない)
+ */
+function splitIntoChunks(value) {
+  const chunks = [];
+  let start = 0;
+  while (start < value.length) {
+    let end = Math.min(start + CACHE_CHUNK_CHARS, value.length);
+    const code = value.charCodeAt(end - 1);
+    if (end < value.length && code >= 0xd800 && code <= 0xdbff) {
+      end--;
+    }
+    chunks.push(value.substring(start, end));
+    start = end;
+  }
+  return chunks;
+}
+
+/**
+ * 大きな文字列を分割してCacheServiceへ保存(putAll で 1 回にまとめる)
  */
 function putLargeCache(cache, key, value, expirationInSeconds) {
+  const chunks = splitIntoChunks(value);
+  const entries = {};
+  chunks.forEach((chunk, i) => {
+    entries[`${key}_${i}`] = chunk;
+  });
 
-  const chunkCount = Math.ceil(
-    value.length / CACHE_CHUNK_SIZE
-  );
-
-  for (let i = 0; i < chunkCount; i++) {
-    const chunk = value.substring(
-      i * CACHE_CHUNK_SIZE,
-      (i + 1) * CACHE_CHUNK_SIZE
-    );
-
-    cache.put(
-      `${key}_${i}`,
-      chunk,
-      expirationInSeconds
-    );
-  }
-
-  // チャンク数を保存
-  cache.put(
-    `${key}_count`,
-    String(chunkCount),
-    expirationInSeconds
-  );
+  // チャンク数も一緒に保存
+  entries[`${key}_count`] = String(chunks.length);
+  cache.putAll(entries, expirationInSeconds);
 }
 
 
@@ -49,31 +55,36 @@ function getLargeCache(cache, key) {
     return null;
   }
 
-  const chunks = [];
+  // チャンクは getAll で 1 回にまとめて読む
+  const chunkKeys = [];
   for (let i = 0; i < chunkCount; i++) {
-    const chunk = cache.get(
-      `${key}_${i}`
-    );
+    chunkKeys.push(`${key}_${i}`);
+  }
+  const found = cache.getAll(chunkKeys);
 
-    // 一部でもキャッシュが存在しない場合は
-    // キャッシュ全体を無効とする
-    if (chunk === null) {
-      return null;
-    }
-
-    chunks.push(chunk);
+  // 一部でもキャッシュが存在しない場合は
+  // キャッシュ全体を無効とする
+  if (chunkKeys.some(k => found[k] == null)) {
+    return null;
   }
 
-  return chunks.join('');
+  return chunkKeys.map(k => found[k]).join('');
+}
+
+/**
+ * JSON の文字列をレスポンスにする
+ */
+function createJsonTextResponse(json) {
+  return ContentService
+    .createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
  * JSONレスポンスを作成
  */
 function createJsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  return createJsonTextResponse(JSON.stringify(data));
 }
 
 
@@ -155,9 +166,7 @@ function getSongList(e) {
   );
 
   if (cached) {
-    return ContentService
-      .createTextOutput(cached)
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJsonTextResponse(cached);
   }
 
   // ========================================
@@ -241,7 +250,5 @@ function getSongList(e) {
   // ========================================
   // 7. JSONレスポンス
   // ========================================
-  return ContentService
-    .createTextOutput(result)
-    .setMimeType(ContentService.MimeType.JSON);
+  return createJsonTextResponse(result);
 }
