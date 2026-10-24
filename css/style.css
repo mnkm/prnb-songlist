@@ -26,14 +26,6 @@ body {
   color: var(--text-color);
 }
 
-.theme-switcher {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-color);
-  font-size: 12px;
-}
-
 .theme-toggle {
   position: relative;
   display: block;
@@ -129,8 +121,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
 }
 
 .menu-button,
-.menu-close-button,
-.side-menu-action {
+.menu-close-button {
   border: 1px solid var(--border-color);
   border-radius: 10px;
   background: var(--surface-background);
@@ -150,14 +141,12 @@ html[data-theme="light"] .theme-toggle-icon-light {
 }
 
 .menu-button:hover,
-.menu-close-button:hover,
-.side-menu-action:hover {
+.menu-close-button:hover {
   transform: translateY(-1px);
 }
 
 .menu-button:focus-visible,
-.menu-close-button:focus-visible,
-.side-menu-action:focus-visible {
+.menu-close-button:focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
@@ -321,14 +310,6 @@ html[data-theme="light"] .theme-toggle-icon-light {
   accent-color: var(--accent-color);
   appearance: auto;
   -webkit-appearance: radio;
-}
-
-.side-menu-action {
-  width: 100%;
-  padding: 12px 14px;
-  text-align: left;
-  font-size: 15px;
-  cursor: pointer;
 }
 
 /* ページ全体のレイアウト */

@@ -1,4 +1,7 @@
 $(function () {
+    // 楽曲データを返す GAS の Web アプリ(gas/ のソース)。デプロイを新しく作り直したときだけ変わる
+    const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx61e698leQlyLWXTTND-YgOTfV2lNB1YBKLgtJfBAmUOL2XTq1A3uW2AnSIck0WCm-5Q/exec';
+
     const TALENT_COLORS = {
         nina: '#fff0f3',
         yura: '#ebf8ff',
@@ -14,9 +17,8 @@ $(function () {
         ruka: '#5f5793'
     };
 
-    // テーマはシステム設定を初期値とし、手動選択後は同一セッション内で優先する。
+    // テーマはシステム設定を初期値とし、手動で選んだら、その選択をブラウザに保存して優先する。
     const themeToggle = document.querySelector('#themeToggle');
-    const currentThemeMode = document.getElementById('currentThemeMode');
     const copyFormatInputs = document.querySelectorAll('input[name="copyFormat"]');
     const menuButton = document.getElementById('menuButton');
     const sideMenu = document.getElementById('sideMenu');
@@ -26,6 +28,25 @@ $(function () {
     const THEME_STORAGE_KEY = 'songlist-theme';
     const COPY_FORMAT_STORAGE_KEY = 'songlist-copy-format';
     const COPY_FORMAT_OPTIONS = ['titleArtist', 'titleOnly'];
+    const DEFAULT_COPY_FORMAT = 'titleArtist';
+
+    // localStorage は、プライベートブラウズやブラウザの設定で使えないと例外になる。
+    // 使えなくてもページは動くよう、読み書きの失敗は無視する(保存されないだけ)
+    function readStorage(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function writeStorage(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (error) {
+            // 保存できなくても、表示中の設定は切り替わる
+        }
+    }
 
     function updateThemeSwitcherPosition() {
         const title = document.querySelector('.page-title');
@@ -73,8 +94,11 @@ $(function () {
     }
 
     function initializeTheme() {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        applyTheme(savedTheme || (systemDarkMode.matches ? 'dark' : 'light'));
+        const savedTheme = readStorage(THEME_STORAGE_KEY);
+        const theme = savedTheme === 'dark' || savedTheme === 'light'
+            ? savedTheme
+            : (systemDarkMode.matches ? 'dark' : 'light');
+        applyTheme(theme);
     }
 
     initializeTheme();
@@ -85,15 +109,19 @@ $(function () {
     }
     themeToggle.addEventListener('change', function () {
         const theme = this.checked ? 'dark' : 'light';
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
+        writeStorage(THEME_STORAGE_KEY, theme);
         applyTheme(theme);
         applyAccentColor($('#talentFilter').val());
     });
 
+    // 保存されていた値などを、コピー形式として使える値にそろえる(知らない値なら既定の形式)
+    function validCopyFormat(value) {
+        return COPY_FORMAT_OPTIONS.includes(value) ? value : DEFAULT_COPY_FORMAT;
+    }
+
     function getSelectedCopyFormat() {
         const selected = document.querySelector('input[name="copyFormat"]:checked');
-        const value = selected ? selected.value : (localStorage.getItem(COPY_FORMAT_STORAGE_KEY) || 'titleArtist');
-        return COPY_FORMAT_OPTIONS.includes(value) ? value : 'titleArtist';
+        return validCopyFormat(selected ? selected.value : readStorage(COPY_FORMAT_STORAGE_KEY));
     }
 
     function syncCopyFormatSelectionState() {
@@ -133,15 +161,15 @@ $(function () {
     copyFormatInputs.forEach(function (input) {
         input.addEventListener('change', function () {
             if (this.checked) {
-                localStorage.setItem(COPY_FORMAT_STORAGE_KEY, this.value);
+                writeStorage(COPY_FORMAT_STORAGE_KEY, this.value);
             }
             syncCopyFormatSelectionState();
         });
     });
 
-    const savedCopyFormat = localStorage.getItem(COPY_FORMAT_STORAGE_KEY) || 'titleArtist';
-    const validSavedCopyFormat = COPY_FORMAT_OPTIONS.includes(savedCopyFormat) ? savedCopyFormat : 'titleArtist';
-    const copyFormatToSelect = document.querySelector(`input[name="copyFormat"][value="${validSavedCopyFormat}"]`);
+    const copyFormatToSelect = document.querySelector(
+        `input[name="copyFormat"][value="${validCopyFormat(readStorage(COPY_FORMAT_STORAGE_KEY))}"]`
+    );
     if (copyFormatToSelect) {
         copyFormatToSelect.checked = true;
     }
@@ -249,7 +277,10 @@ $(function () {
         return params.get(name);
     }
 
-    const AVAILABLE_TALENTS = ['nina', 'yura', 'ren', 'hinata', 'ruka'];
+    // 選べるタレントは、index.html のタレントの選択肢から取る(タレントを足すときは index.html と GAS だけを直す)
+    const AVAILABLE_TALENTS = $('#talentFilter option').map(function () {
+        return this.value;
+    }).get();
 
     // 楽曲データとして扱う項目
     const ROW_FIELDS = ['title', 'artist', 'category', 'genre', 'type', 'reading'];
@@ -295,15 +326,11 @@ $(function () {
             table.draw();
         }
     }
+
+    // URL のクエリを「?talent=<id>」だけにする(type=request などは、最初の表示にだけ使う)
     function updateUrlTalent(talent) {
         const url = new URL(window.location);
-        url.searchParams.set('talent', talent);
-        url.searchParams.keys().forEach(key => {
-            if (key !== 'talent'){
-                url.searchParams.delete(key);
-            }
-        })
-
+        url.search = new URLSearchParams({ talent: talent }).toString();
         history.replaceState(null, '', url);
     }
 
@@ -418,151 +445,159 @@ $(function () {
         });
     }
 
+    // DataTables の列。どの列も、外部データ(スプレッドシートのテキスト)を HTML エスケープして描く
+    function textColumn(data, options) {
+        return Object.assign({ data: data, render: $.fn.dataTable.render.text() }, options);
+    }
+
+    // 表の中身を rows に入れ替える(最初の 1 回は DataTable を作る)
+    function showRows(rows) {
+        if (!table) {
+            table = $('#grid').DataTable({
+                data: rows,
+                dom: 'rtip',
+                pageLength: 10,
+                scrollY: calcTableHeight() + 'px',
+                scrollCollapse: true,
+                columns: [
+                    textColumn('title', { title: '楽曲' }),
+                    textColumn('artist', { title: 'アーティスト' }),
+                    textColumn('category', { title: 'カテゴリ' }),
+
+                    // 非表示だが検索対象
+                    textColumn('genre', { visible: false, searchable: true }),
+                    textColumn('type', { visible: false, searchable: true }),
+                    textColumn('reading', { visible: false, searchable: true })
+                ],
+
+                searching: true,
+                paging: true,
+                ordering: true,
+
+                language: {
+                    search: "",
+                    searchPlaceholder: "キーワード検索",
+                    info: "_TOTAL_ 件中 _START_〜_END_ 件",
+                    // 絞り込んだとき・0 件のときの文も日本語にする(指定しないと英語の既定の文が出る)
+                    infoFiltered: "（全 _MAX_ 件から絞り込み）",
+                    infoEmpty: "0 件",
+                    zeroRecords: "一致する楽曲はありません",
+                    emptyTable: "楽曲がありません",
+                    paginate: {
+                        first: "最初",
+                        last: "最後",
+                        next: "次",
+                        previous: "前"
+                    }
+                }
+            });
+            updatePageLengthButtons();
+        } else {
+            table.clear();
+            table.rows.add(rows);
+            table.draw();
+        }
+        updateResponsiveColumns();
+        updateTableHeight();
+    }
+
+    // 何回目の読み込みか。タレントを続けて切り替えたとき、前のタレントの遅れて届いた応答で上書きしないために使う
+    let loadSeq = 0;
+
     function loadTable(talent, type) {
+        const seq = ++loadSeq;
         applyAccentColor(talent);
         showLoading();
 
-        $.getJSON(
-            "https://script.google.com/macros/s/AKfycbx61e698leQlyLWXTTND-YgOTfV2lNB1YBKLgtJfBAmUOL2XTq1A3uW2AnSIck0WCm-5Q/exec",
-            { talent: talent }
-        )
-            .done(
-                function (res) {
+        // 読み込めなかったときは、前のタレントの曲が選んだタレントの曲に見えないよう、表を空にする
+        const failed = function () {
+            resetFilters();
+            showRows([]);
+            rebuildFilters([]);
+            updateFilterPanelTitles();
+            alert('データの取得に失敗しました');
+        };
 
-                    // GAS側でエラーになった場合
-                    if (res.error) {
-                        alert('データの取得に失敗しました');
-                        return;
-                    }
+        $.getJSON(GAS_ENDPOINT, { talent: talent })
+            .done(function (res) {
+                if (seq !== loadSeq) {
+                    return;
+                }
 
-                    const rows = normalizeRows(res.rows);
+                // GAS側でエラーになった場合
+                if (res.error) {
+                    failed();
+                    return;
+                }
 
-                    // フィルタ初期化（重要）
-                    resetFilters();
+                const rows = normalizeRows(res.rows);
 
-                    // DataTable を変数に保持
-                    if (!table) {
-                        table = $('#grid').DataTable({
-                            data: rows,
-                            dom: 'rtip',
-                            pageLength: 10,
-                            scrollY: calcTableHeight() + 'px',
-                            scrollCollapse: true,
-                            columns: [
-                                { data: 'title', title: '楽曲', render: $.fn.dataTable.render.text() },
-                                { data: 'artist', title: 'アーティスト', render: $.fn.dataTable.render.text() },
-                                { data: 'category', title: 'カテゴリ', render: $.fn.dataTable.render.text() },
+                // フィルタ初期化（重要）
+                resetFilters();
+                showRows(rows);
 
-                                // 非表示だが検索対象
-                                {
-                                    data: 'genre',
-                                    visible: false,
-                                    searchable: true,
-                                    render: $.fn.dataTable.render.text()
-                                },
-                                {
-                                    data: 'type',
-                                    visible: false,
-                                    searchable: true,
-                                    render: $.fn.dataTable.render.text()
-                                },
-                                {
-                                    data: 'reading',
-                                    visible: false,
-                                    searchable: true,
-                                    render: $.fn.dataTable.render.text()
-                                }
-                            ],
+                // プルダウン再構築
+                rebuildFilters(rows);
+                updateFilterPanelTitles();
 
-                            searching: true,
-                            paging: true,
-                            ordering: true,
+                // 条件：type指定がrequestの場合
+                if (talent === 'hinata' && type === 'request') {
+                    $('#typeFilter').val('弾き語り');
 
-                            language: {
-                                search: "",
-                                searchPlaceholder: "キーワード検索",
-                                info: "_TOTAL_ 件中 _START_〜_END_ 件",
-                                paginate: {
-                                    first: "最初",
-                                    last: "最後",
-                                    next: "次",
-                                    previous: "前"
-                                }
-                            }
-                        });
-                        updatePageLengthButtons();
-                        updateResponsiveColumns();
-                        updateTableHeight();
-                    } else {
-                        table.clear();
-                        table.rows.add(rows);
-                        table.draw();
-                        updateResponsiveColumns();
-                        updateTableHeight();
-                    }
-
-                    // プルダウン再構築
-                    rebuildFilters(rows);
+                    // 初期フィルタ適用
+                    applyFilters();
                     updateFilterPanelTitles();
-
-                    // 条件：type指定がrequestの場合
-                    if (talent =='hinata' && type == 'request') {
-                        $('#typeFilter').val('弾き語り');
-
-                        // 初期フィルタ適用
-                        applyFilters();
-                        updateFilterPanelTitles();
-                    } else {
-                        updateUrlTalent(talent);
-                    }
-                })
+                } else {
+                    updateUrlTalent(talent);
+                }
+            })
             .fail(function () {
-                applyAccentColor(talent);
-                alert('データの取得に失敗しました');
+                if (seq === loadSeq) {
+                    failed();
+                }
             })
             .always(function () {
-                hideLoading();
-            }
-            );
+                if (seq === loadSeq) {
+                    hideLoading();
+                }
+            });
     }
 
-    $(function () {
-        // URLパラメータから取得
-        const urlTalent = getUrlParam('talent');
-        const urlType = getUrlParam('type');
+    // URLパラメータから取得
+    const urlTalent = getUrlParam('talent');
+    const urlType = getUrlParam('type');
 
-        // select の初期値決定
-        const initialTalent = AVAILABLE_TALENTS.includes(urlTalent)
-            ? urlTalent
-            : $('#talentFilter').val(); // HTML側のデフォルト
-        
-        // select に反映
-        $('#talentFilter').val(initialTalent);
+    // select の初期値決定
+    const initialTalent = AVAILABLE_TALENTS.includes(urlTalent)
+        ? urlTalent
+        : $('#talentFilter').val(); // HTML側のデフォルト
 
-        // スマートフォンではフィルタパネルを初期状態で折りたたむ
-        setInitialFilterPanelState();
+    // select に反映
+    $('#talentFilter').val(initialTalent);
 
-        // 初期表示
-        applyAccentColor(initialTalent);
-        loadTable($('#talentFilter').val(), urlType);
+    // スマートフォンではフィルタパネルを初期状態で折りたたむ
+    setInitialFilterPanelState();
 
-        // フィルタ操作
-        $(FILTER_SELECTOR).on('change', applyFilters);
-        $(FILTER_SELECTOR).on('change', updateFilterPanelTitles);
-        $('#textFilter').on('input', function () {
-            applyFilters();
-            updateFilterPanelTitles();
-        });
-        mobileMediaQuery.addEventListener('change', function () {
-            updateFilterPanelTitles();
-            updateResponsiveColumns();
-            updateTableHeight();
-        });
-        $(window).on('resize', updateTableHeight);
-        $('.filter-panel .panel-collapse').on('shown.bs.collapse hidden.bs.collapse', function () {
-            updateFilterPanelTitles();
-            updateTableHeight();
-        });
+    // 初期表示
+    loadTable(initialTalent, urlType);
 
+    // フィルタ操作
+    $(FILTER_SELECTOR).on('change', function () {
+        applyFilters();
+        updateFilterPanelTitles();
+    });
+    $('#textFilter').on('input', function () {
+        applyFilters();
+        updateFilterPanelTitles();
+    });
+    mobileMediaQuery.addEventListener('change', function () {
+        updateFilterPanelTitles();
+        updateResponsiveColumns();
+        updateTableHeight();
+    });
+    $(window).on('resize', updateTableHeight);
+    $('.filter-panel .panel-collapse').on('shown.bs.collapse hidden.bs.collapse', function () {
+        updateFilterPanelTitles();
+        updateTableHeight();
     });
 });
