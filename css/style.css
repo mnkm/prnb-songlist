@@ -465,12 +465,28 @@ table.dataTable tbody td.dataTables_empty {
 
 /* スマートフォンの幅で、曲名の下に出すアーティストとカテゴリ */
 .song-sub {
-  display: block;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 2px;
   font-size: 12px;
   color: var(--muted-text-color);
+}
+
+.song-sub-artist {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-sub-category {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
   white-space: nowrap;
 }
 

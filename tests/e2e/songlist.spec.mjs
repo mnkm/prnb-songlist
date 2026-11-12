@@ -453,7 +453,9 @@ test.describe('スマートフォンの幅', () => {
         await expect(page.locator('#songCount')).toHaveText('4 曲');
         await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
         // アーティストとカテゴリは曲名の下に出す
-        await expect(page.locator('#grid tbody tr').first()).toContainText('青い空アーティストA · J-POP');
+        const firstRow = page.locator('#grid tbody tr').first();
+        await expect(firstRow.locator('.song-sub-artist')).toHaveText('アーティストA');
+        await expect(firstRow.locator('.song-sub-category')).toHaveText('J-POP');
         await expect(page.locator('#textFilter')).toBeVisible();
         await expect(page.locator('#filterArea')).toBeHidden();
 

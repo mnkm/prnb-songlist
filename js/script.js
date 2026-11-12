@@ -497,8 +497,10 @@ $(function () {
         if (!mobileMediaQuery.matches) {
             return title;
         }
-        const sub = [row.artist, row.category].filter(Boolean).map(escapeText).join(' · ');
-        return sub ? `${title}<span class="song-sub">${sub}</span>` : title;
+        // 区切りの記号はアーティスト名にも含まれることがあるので使わず、カテゴリは枠で囲んで分ける
+        const artist = row.artist ? `<span class="song-sub-artist">${escapeText(row.artist)}</span>` : '';
+        const category = row.category ? `<span class="song-sub-category">${escapeText(row.category)}</span>` : '';
+        return artist || category ? `${title}<span class="song-sub">${artist}${category}</span>` : title;
     }
 
     // 表の中身を rows に入れ替える(最初の 1 回は DataTable を作る)
