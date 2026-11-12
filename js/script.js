@@ -210,6 +210,8 @@ $(function () {
         const tableArea = $('.table-area');
         const wrapper = tableArea.find('.dataTables_wrapper');
         const toolbarHeight = tableArea.find('.table-toolbar').outerHeight(true) || 0;
+        // 狭い画面で絞り込みを開いても、表が数行は見えるようにする(はみ出した分は表の欄ごとスクロールする)
+        const minHeight = mobileMediaQuery.matches ? 160 : 0;
         if (!wrapper.length) {
             return Math.max(50, tableArea.innerHeight() - toolbarHeight - 100);
         }
@@ -219,7 +221,7 @@ $(function () {
         const pagerHeight = wrapper.find('.dataTables_paginate').outerHeight(true) || 0;
         const controlsHeight = toolbarHeight + scrollHeadHeight + infoHeight + pagerHeight;
 
-        return Math.max(0, tableArea.innerHeight() - controlsHeight);
+        return Math.max(minHeight, tableArea.innerHeight() - controlsHeight);
     }
 
     function showLoading() {
@@ -506,6 +508,8 @@ $(function () {
     // 表の中身を rows に入れ替える(最初の 1 回は DataTable を作る)
     function showRows(rows) {
         if (!table) {
+            // 狭い画面ではページ番号を減らし、ページ送りが 1 行に収まるようにする
+            $.fn.dataTable.ext.pager.numbers_length = mobileMediaQuery.matches ? 5 : 7;
             table = $('#grid').DataTable({
                 data: rows,
                 dom: 'rtip',
@@ -574,12 +578,15 @@ $(function () {
         }
     }
 
+    // 最初の読み込みに失敗したときは、URL の type=request も引き継いで読み込み直す
     $('#retryButton').on('click', function () {
-        loadTable(currentTalent);
+        loadTable(currentTalent, hasLoaded ? undefined : urlType);
     });
 
     // 何回目の読み込みか。タレントを続けて切り替えたとき、前のタレントの遅れて届いた応答で上書きしないために使う
     let loadSeq = 0;
+    // 一度でも読み込みに成功したか
+    let hasLoaded = false;
 
     function loadTable(talent, type) {
         const seq = ++loadSeq;
@@ -593,8 +600,9 @@ $(function () {
             resetFilters(true);
             showRows([]);
             rebuildFilters([]);
-            showLoadError(true);
             updateFilterState();
+            // 曲数は「0 曲」に見えないよう消す(updateFilterState のあとに行う)
+            showLoadError(true);
         };
 
         $.ajax({ url: GAS_ENDPOINT, data: { talent: talent }, dataType: 'json', timeout: LOAD_TIMEOUT })
@@ -610,6 +618,8 @@ $(function () {
                 }
 
                 const rows = normalizeRows(res.rows);
+                const wasError = $('.table-area').hasClass('has-error');
+                hasLoaded = true;
                 showLoadError(false);
 
                 // 絞り込みは選択肢がタレントごとに違うので戻す。キーワードは残す
@@ -628,6 +638,10 @@ $(function () {
                 applyFilters();
                 updateFilterState();
                 updateTableHeight();
+                // 再読み込みのボタンは隠れるので、フォーカスを選んでいるタレントのボタンに移す
+                if (wasError) {
+                    $('.talent-button[aria-pressed="true"]').trigger('focus');
+                }
             })
             .fail(function () {
                 if (seq === loadSeq) {

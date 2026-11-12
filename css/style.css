@@ -935,6 +935,11 @@ table.dataTable tbody td.dataTables_empty {
     width: 100% !important;
   }
 
+  /* 表の欄が画面に収まらないときは、欄ごとスクロールしてページ送りまで届くようにする */
+  .table-area {
+    overflow-y: auto;
+  }
+
   .dataTables_wrapper .dataTables_info,
   .dataTables_wrapper .dataTables_paginate {
     text-align: center;

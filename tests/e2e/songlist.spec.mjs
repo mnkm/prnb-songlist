@@ -112,6 +112,18 @@ test.describe('菜鳥ひなたのリクエスト用の URL', () => {
         await expect(page).toHaveURL(/\?talent=hinata&type=request$/);
     });
 
+    test('最初の読み込みに失敗して再読み込みしても、リクエスト用の条件を引き継ぐ', async ({ page }) => {
+        let fail = true;
+        await mockGas(page, talent => (fail ? 'abort' : { rows: SONGS[talent] }));
+        await openPage(page, 'talent=hinata&type=request');
+        await expect(page.locator('#loadError')).toBeVisible();
+
+        fail = false;
+        await page.locator('#retryButton').click();
+        await expect(page.locator('#typeFilter')).toHaveValue('弾き語り');
+        await expect(page).toHaveURL(/\?talent=hinata&type=request$/);
+    });
+
     test('ほかのタレントでは type=request を使わず、URL から外す', async ({ page }) => {
         await mockGas(page);
         await openPage(page, 'talent=ren&type=request');
@@ -289,6 +301,9 @@ test.describe('読み込みの失敗', () => {
             await expect(page.locator('#loadError')).toContainText('データを読み込めませんでした');
             await expect(page.locator('#grid')).toBeHidden();
             await expect(page.locator('#loadingOverlay')).toBeHidden();
+
+            // 曲数は「0 曲」と出さない
+            await expect(page.locator('#songCount')).toHaveText('');
 
             fail = false;
             await page.locator('#retryButton').click();
