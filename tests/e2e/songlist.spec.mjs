@@ -1,23 +1,20 @@
 // 楽曲リストの画面の、今の動作を確かめるテスト
 import { test, expect } from '@playwright/test';
 import { SONGS, manySongs } from './fixtures.mjs';
-import { mockGas, blockExternal, openPage, visibleTitles } from './helpers.mjs';
+import { mockGas, blockExternal, openPage, visibleTitles, selectTalent, expectTalent } from './helpers.mjs';
 
 // テストが待っていないダイアログ(DataTables の警告など)。Playwright は黙って閉じるので、記録して失敗にする
 let unexpectedDialogs = [];
 
 test.beforeEach(async ({ page }) => {
     unexpectedDialogs = [];
-    expectDialog = false;
     await blockExternal(page);
     // スクリプトのエラーが起きたらテストを失敗させる
     page.on('pageerror', error => {
         throw error;
     });
     page.on('dialog', dialog => {
-        if (!expectDialog) {
-            unexpectedDialogs.push(dialog.message());
-        }
+        unexpectedDialogs.push(dialog.message());
     });
 });
 
@@ -25,17 +22,16 @@ test.afterEach(() => {
     expect(unexpectedDialogs).toEqual([]);
 });
 
-// 読み込みの失敗のテストでだけ、ダイアログを待つ
-let expectDialog = false;
 
 test.describe('読み込みとタレントの切り替え', () => {
-    test('最初は桃瀬になの曲を、曲名の順に表示する', async ({ page }) => {
+    test('最初は桃瀬になの曲を、読みの五十音順に表示する', async ({ page }) => {
         const calls = await mockGas(page);
         await openPage(page);
 
         expect(calls).toEqual(['nina']);
-        await expect(page.locator('#talentFilter')).toHaveValue('nina');
-        expect(await visibleTitles(page)).toEqual(['Star Song', '白い雲', '青い空', '黄色い花']);
+        await expectTalent(page, 'nina');
+        await expect(page.locator('#songCount')).toHaveText('4 曲');
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
         await expect(page.locator('.dataTables_info')).toHaveText('4 件中 1〜4 件');
         await expect(page).toHaveURL(/\?talent=nina$/);
     });
@@ -45,8 +41,8 @@ test.describe('読み込みとタレントの切り替え', () => {
         await openPage(page, 'talent=ren');
 
         expect(calls).toEqual(['ren']);
-        await expect(page.locator('#talentFilter')).toHaveValue('ren');
-        expect(await visibleTitles(page)).toEqual(['緑の葉', '赤い実']);
+        await expectTalent(page, 'ren');
+        expect(await visibleTitles(page)).toEqual(['赤い実', '緑の葉']);
     });
 
     test('知らない talent は桃瀬になとして開き、URL を直す', async ({ page }) => {
@@ -54,24 +50,25 @@ test.describe('読み込みとタレントの切り替え', () => {
         await openPage(page, 'talent=unknown');
 
         expect(calls).toEqual(['nina']);
-        await expect(page.locator('#talentFilter')).toHaveValue('nina');
+        await expectTalent(page, 'nina');
         await expect(page).toHaveURL(/\?talent=nina$/);
     });
 
-    test('タレントを切り替えると、URL と曲を入れ替え、絞り込みを戻す', async ({ page }) => {
+    test('タレントを切り替えると、URL と曲を入れ替え、絞り込みは戻してキーワードは残す', async ({ page }) => {
         const calls = await mockGas(page);
         await openPage(page);
         await page.locator('#categoryFilter').selectOption('J-POP');
-        await page.locator('#textFilter').fill('青');
+        await page.locator('#textFilter').fill('い');
 
-        await page.locator('#talentFilter').selectOption('ren');
-        await expect(page.locator('#grid tbody tr')).toHaveCount(2);
+        await selectTalent(page, 'ren');
 
         expect(calls).toEqual(['nina', 'ren']);
         await expect(page).toHaveURL(/\?talent=ren$/);
-        expect(await visibleTitles(page)).toEqual(['緑の葉', '赤い実']);
+        await expectTalent(page, 'ren');
         await expect(page.locator('#categoryFilter')).toHaveValue('');
-        await expect(page.locator('#textFilter')).toHaveValue('');
+        // キーワード「い」は残り、読みに「い」を含む赤い実だけが残る
+        await expect(page.locator('#textFilter')).toHaveValue('い');
+        expect(await visibleTitles(page)).toEqual(['赤い実']);
         // 絞り込みの選択肢は新しいタレントの曲から作り直す
         await expect(page.locator('#categoryFilter option')).toHaveText(['すべて', 'J-POP', 'アニソン']);
     });
@@ -91,7 +88,8 @@ test.describe('読み込みとタレントの切り替え', () => {
         });
 
         await page.goto('./');
-        await page.locator('#talentFilter').selectOption('ren');
+        // 読み込み中の幕の上からは押せないので、ボタンの click イベントを直接起こす
+        await page.locator('.talent-button[data-talent="ren"]').dispatchEvent('click');
         await expect(page.locator('#grid tbody tr')).toHaveCount(2);
         const ninaFinished = page.waitForEvent('requestfinished', request => request.url().includes('talent=nina'));
         releaseNina();
@@ -99,7 +97,7 @@ test.describe('読み込みとタレントの切り替え', () => {
         // 届いた応答の処理(jQuery のコールバック)が終わるのを待つ
         await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 0)));
 
-        expect(await visibleTitles(page)).toEqual(['緑の葉', '赤い実']);
+        expect(await visibleTitles(page)).toEqual(['赤い実', '緑の葉']);
     });
 });
 
@@ -109,7 +107,7 @@ test.describe('菜鳥ひなたのリクエスト用の URL', () => {
         await openPage(page, 'talent=hinata&type=request');
 
         await expect(page.locator('#typeFilter')).toHaveValue('弾き語り');
-        expect(await visibleTitles(page)).toEqual(['昼の歌', '朝の歌']);
+        expect(await visibleTitles(page)).toEqual(['朝の歌', '昼の歌']);
         // この URL は、そのまま共有できるよう書き換えない
         await expect(page).toHaveURL(/\?talent=hinata&type=request$/);
     });
@@ -131,8 +129,9 @@ test.describe('絞り込みとキーワード', () => {
         await expect(page.locator('#categoryFilter option')).toHaveText(['すべて', 'J-POP', 'アニソン', 'ボカロ']);
         await expect(page.locator('#genreFilter option')).toHaveText(['すべて', 'バラード', 'ロック']);
         await expect(page.locator('#artistFilter option')).toHaveText(['すべて', 'アーティストA', 'アーティストB', 'アーティストC']);
-        // 値のない項目は選択肢に入れない
-        await expect(page.locator('#typeFilter option')).toHaveText(['すべて']);
+        // 値が 1 つもない項目は隠す
+        await expect(page.locator('#typeFilter')).toBeHidden();
+        await expect(page.locator('#categoryFilter')).toBeVisible();
     });
 
     test('絞り込みは値が完全に一致する曲だけを残し、組み合わせられる', async ({ page }) => {
@@ -140,7 +139,8 @@ test.describe('絞り込みとキーワード', () => {
         await openPage(page);
 
         await page.locator('#categoryFilter').selectOption('J-POP');
-        expect(await visibleTitles(page)).toEqual(['白い雲', '青い空']);
+        expect(await visibleTitles(page)).toEqual(['青い空', '白い雲']);
+        await expect(page.locator('#songCount')).toHaveText('2 / 4 曲');
 
         await page.locator('#genreFilter').selectOption('ロック');
         expect(await visibleTitles(page)).toEqual(['白い雲']);
@@ -159,7 +159,7 @@ test.describe('絞り込みとキーワード', () => {
         expect(await visibleTitles(page)).toEqual(['Star Song']);
 
         await page.locator('#textFilter').fill('バラード');
-        expect(await visibleTitles(page)).toEqual(['Star Song', '青い空']);
+        expect(await visibleTitles(page)).toEqual(['青い空', 'Star Song']);
     });
 
     test('一致する曲がないときは、その旨を出す', async ({ page }) => {
@@ -171,19 +171,45 @@ test.describe('絞り込みとキーワード', () => {
         await expect(page.locator('.dataTables_info')).toHaveText('0 件 （全 4 件から絞り込み）');
     });
 
-    test('パネルを閉じると、見出しに設定中の内容を出す', async ({ page }) => {
+    test('条件を設定すると印と消去ボタンを出し、「条件をクリア」ですべて戻す', async ({ page }) => {
+        await mockGas(page);
+        await openPage(page);
+        await expect(page.locator('#filterBadge')).toBeHidden();
+        await expect(page.locator('#clearFiltersButton')).toBeHidden();
+        await expect(page.locator('#clearTextButton')).toBeHidden();
+
+        await page.locator('#categoryFilter').selectOption('J-POP');
+        await page.locator('#textFilter').fill('青');
+        await expect(page.locator('#filterBadge')).toBeVisible();
+        await expect(page.locator('#clearTextButton')).toBeVisible();
+
+        await page.locator('#clearFiltersButton').click();
+        await expect(page.locator('#categoryFilter')).toHaveValue('');
+        await expect(page.locator('#textFilter')).toHaveValue('');
+        await expect(page.locator('#filterBadge')).toBeHidden();
+        await expect(page.locator('#clearFiltersButton')).toBeHidden();
+        expect(await visibleTitles(page)).toHaveLength(4);
+    });
+
+    test('「×」でキーワードだけを消す', async ({ page }) => {
         await mockGas(page);
         await openPage(page);
         await page.locator('#categoryFilter').selectOption('J-POP');
         await page.locator('#textFilter').fill('青');
 
-        await page.locator('[data-target="#talentFilterPanel"]').click();
-        await page.locator('[data-target="#detailFilterPanel"]').click();
-        await page.locator('[data-target="#textFilterPanel"]').click();
+        await page.locator('#clearTextButton').click();
+        await expect(page.locator('#textFilter')).toHaveValue('');
+        await expect(page.locator('#categoryFilter')).toHaveValue('J-POP');
+        expect(await visibleTitles(page)).toEqual(['青い空', '白い雲']);
+    });
 
-        await expect(page.locator('#talentPanelTitle')).toHaveText('タレント：桃瀬にな');
-        await expect(page.locator('#detailPanelTitle')).toHaveText('フィルタ：設定中');
-        await expect(page.locator('#textPanelTitle')).toHaveText('キーワード：設定中');
+    test('リクエスト用の URL で開いて「条件をクリア」したら、URL を ?talent= だけにする', async ({ page }) => {
+        await mockGas(page);
+        await openPage(page, 'talent=hinata&type=request');
+
+        await page.locator('#clearFiltersButton').click();
+        await expect(page).toHaveURL(/\?talent=hinata$/);
+        expect(await visibleTitles(page)).toHaveLength(3);
     });
 });
 
@@ -206,6 +232,7 @@ test.describe('表の表示', () => {
         await mockGas(page, () => ({ rows: manySongs(15) }));
         await openPage(page);
 
+        expect((await visibleTitles(page))[0]).toBe('曲001');
         await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
         expect((await visibleTitles(page))[0]).toBe('曲015');
 
@@ -249,23 +276,24 @@ test.describe('読み込みの失敗', () => {
         ['GAS がエラーを返したとき', () => ({ rows: [], error: 'internal_error' })],
         ['通信に失敗したとき', () => 'abort']
     ]) {
-        test(`${name}は知らせて、表を空にする`, async ({ page }) => {
-            expectDialog = true;
+        test(`${name}は画面に知らせ、前のタレントの曲を消す。再読み込みできる`, async ({ page }) => {
             let fail = false;
             await mockGas(page, talent => (fail ? handler() : { rows: SONGS[talent] }));
             await openPage(page);
             expect(await visibleTitles(page)).toHaveLength(4);
 
-            const dialog = page.waitForEvent('dialog');
             fail = true;
-            await page.locator('#talentFilter').selectOption('ren');
-            const alert = await dialog;
-            expect(alert.message()).toBe('データの取得に失敗しました');
-            await alert.accept();
+            await selectTalent(page, 'ren');
 
+            await expect(page.locator('#loadError')).toBeVisible();
+            await expect(page.locator('#loadError')).toContainText('データを読み込めませんでした');
+            await expect(page.locator('#grid')).toBeHidden();
             await expect(page.locator('#loadingOverlay')).toBeHidden();
-            await expect(page.locator('#grid tbody td')).toHaveText('楽曲がありません');
-            await expect(page.locator('#categoryFilter option')).toHaveText(['すべて']);
+
+            fail = false;
+            await page.locator('#retryButton').click();
+            await expect(page.locator('#loadError')).toBeHidden();
+            expect(await visibleTitles(page)).toEqual(['赤い実', '緑の葉']);
         });
     }
 });
@@ -349,7 +377,7 @@ test.describe('テーマ', () => {
         const accent = () => page.evaluate(() => document.documentElement.style.getPropertyValue('--accent-color'));
 
         expect(await accent()).toBe('#fff0f3');
-        await page.locator('#talentFilter').selectOption('ren');
+        await selectTalent(page, 'ren');
         await expect.poll(accent).toBe('#fff2da');
 
         // ダークに切り替えると、ダーク用の色にする
@@ -384,16 +412,45 @@ test.describe('メニュー', () => {
     });
 });
 
-test.describe('スマートフォンの幅', () => {
-    test.use({ viewport: { width: 390, height: 844 } });
-
-    test('カテゴリの列を隠し、絞り込みとキーワードの欄を閉じた状態で開く', async ({ page }) => {
+test.describe('キーボード', () => {
+    test('行に Tab で移り、Enter でコピーする', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await mockGas(page);
         await openPage(page);
 
-        await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲', 'アーティスト']);
-        await expect(page.locator('#talentFilterPanel')).toBeVisible();
-        await expect(page.locator('#detailFilterPanel')).toBeHidden();
-        await expect(page.locator('#textFilterPanel')).toBeHidden();
+        await page.locator('#grid tbody tr').first().focus();
+        await page.keyboard.press('Enter');
+
+        await expect(page.locator('#toast')).toHaveText('コピーしました: 青い空 / アーティストA');
+    });
+
+    test('閉じたメニューには Tab で入らず、開くとメニューの中に、閉じると元のボタンに戻る', async ({ page }) => {
+        await mockGas(page);
+        await openPage(page);
+        await expect(page.locator('#sideMenu')).toHaveJSProperty('inert', true);
+
+        await page.locator('#menuButton').click();
+        await expect(page.locator('#closeMenuButton')).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#menuButton')).toBeFocused();
+        await expect(page.locator('#sideMenu')).toHaveJSProperty('inert', true);
+    });
+});
+
+test.describe('スマートフォンの幅', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('アーティストとカテゴリを曲名の下に出し、絞り込みの欄を閉じた状態で開く', async ({ page }) => {
+        await mockGas(page);
+        await openPage(page);
+
+        await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
+        // アーティストとカテゴリは曲名の下に出す
+        await expect(page.locator('#grid tbody tr').first()).toContainText('青い空アーティストA · J-POP');
+        await expect(page.locator('#textFilter')).toBeVisible();
+        await expect(page.locator('#filterArea')).toBeHidden();
+
+        await page.locator('#filterToggle').click();
+        await expect(page.locator('#categoryFilter')).toBeVisible();
     });
 });
