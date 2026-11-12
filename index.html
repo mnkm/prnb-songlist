@@ -135,7 +135,7 @@
             </button>
         </header>
 
-        <!-- タレントの切り替え。選べるタレントはこのボタンの並びから取る。スマートフォンの幅では下の名前だけを出す -->
+        <!-- タレントの切り替え。選べるタレントはこのボタンの並びから取る。スマートフォンの幅では下の名前だけを出す(フルネームは読み上げ用) -->
         <div class="talent-switch" role="group" aria-label="タレント">
             <button type="button" class="talent-button" data-talent="nina" aria-pressed="false"><span class="talent-name-full">桃瀬にな</span><span class="talent-name-short" aria-hidden="true">にな</span></button>
             <button type="button" class="talent-button" data-talent="yura" aria-pressed="false"><span class="talent-name-full">碓氷ゆら</span><span class="talent-name-short" aria-hidden="true">ゆら</span></button>
@@ -196,7 +196,7 @@
         <div class="table-area">
             <div class="table-toolbar">
                 <p class="table-status">
-                    <span class="song-count"><span id="talentName" class="talent-name-label"></span><span id="songCount"></span></span>
+                    <span id="songCount" class="song-count"></span>
                     <span class="copy-hint">曲を押すとコピーします</span>
                 </p>
                 <div class="page-length-controls" role="group" aria-label="1ページの表示件数">

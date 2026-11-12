@@ -204,8 +204,7 @@ a {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.talent-name-short,
-.talent-name-label {
+.talent-name-short {
   display: none;
 }
 
@@ -844,7 +843,7 @@ table.dataTable tbody td.dataTables_empty {
     font-size: 20px;
   }
 
-  /* 5 名を下の名前だけにして、同じ幅で 1 段に並べる。フルネームは曲数の横に出す */
+  /* 5 名を下の名前だけにして、同じ幅で 1 段に並べる */
   .talent-switch {
     flex-wrap: nowrap;
     gap: 4px;
@@ -877,10 +876,6 @@ table.dataTable tbody td.dataTables_empty {
     display: inline;
   }
 
-  .talent-name-label {
-    display: inline;
-    margin-right: 6px;
-  }
 
   .search-panel {
     margin-bottom: 8px;
