@@ -283,7 +283,12 @@ $(function () {
 
     function setTalentButtons(talent) {
         $('.talent-button').each(function () {
-            $(this).attr('aria-pressed', $(this).data('talent') === talent ? 'true' : 'false');
+            const isSelected = $(this).data('talent') === talent;
+            $(this).attr('aria-pressed', isSelected ? 'true' : 'false');
+            if (isSelected) {
+                // スマートフォンの幅では、ボタンが下の名前だけなので、曲数の横にフルネームを出す
+                $('#talentName').text($(this).find('.talent-name-full').text());
+            }
         });
     }
 

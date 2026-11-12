@@ -444,6 +444,13 @@ test.describe('スマートフォンの幅', () => {
         await mockGas(page);
         await openPage(page);
 
+        // タレントのボタンは下の名前だけを 1 段に並べ、フルネームは曲数の横に出す
+        await expect(page.locator('.talent-button[data-talent="nina"]')).toHaveText('桃瀬になにな');
+        await expect(page.locator('.talent-button[data-talent="nina"] .talent-name-short')).toBeVisible();
+        await expect(page.locator('.talent-button[data-talent="nina"] .talent-name-full')).toHaveCSS('position', 'absolute');
+        const tops = await page.locator('.talent-button').evaluateAll(buttons => buttons.map(b => b.getBoundingClientRect().top));
+        expect(new Set(tops).size).toBe(1);
+        await expect(page.locator('.song-count')).toHaveText('桃瀬にな4 曲');
         await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
         // アーティストとカテゴリは曲名の下に出す
         await expect(page.locator('#grid tbody tr').first()).toContainText('青い空アーティストA · J-POP');

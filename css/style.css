@@ -204,6 +204,11 @@ a {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
+.talent-name-short,
+.talent-name-label {
+  display: none;
+}
+
 .talent-button:hover {
   border-color: var(--accent-strong);
 }
@@ -839,21 +844,42 @@ table.dataTable tbody td.dataTables_empty {
     font-size: 20px;
   }
 
-  /* 5 名を 2 段に折り返す */
+  /* 5 名を下の名前だけにして、同じ幅で 1 段に並べる。フルネームは曲数の横に出す */
   .talent-switch {
-    gap: 6px;
+    flex-wrap: nowrap;
+    gap: 4px;
     margin-bottom: 8px;
   }
 
   .talent-button {
-    flex: 1 1 calc(33.333% - 6px);
+    flex: 1 1 0;
+    min-width: 0;
     min-height: 44px;
-    padding: 6px 8px;
+    padding: 6px 2px;
     font-size: 13px;
   }
 
   .talent-button[aria-pressed="true"] {
-    padding: 5px 7px;
+    padding: 5px 1px;
+  }
+
+  /* フルネームは画面には出さず、読み上げにだけ使う */
+  .talent-name-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .talent-name-short {
+    display: inline;
+  }
+
+  .talent-name-label {
+    display: inline;
+    margin-right: 6px;
   }
 
   .search-panel {
