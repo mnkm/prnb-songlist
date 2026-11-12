@@ -6,6 +6,9 @@
   "scripts": {
     "vendor": "node scripts/copy-vendor.mjs",
     "prepare": "npm run vendor",
+    "test": "npm run test:gas && npm run test:e2e",
+    "test:gas": "node --test \"tests/gas/*.test.mjs\"",
+    "test:e2e": "npm run vendor && playwright test",
     "gas:login": "clasp login",
     "gas:logout": "clasp logout",
     "gas:clone": "cd gas && clasp clone 1WbtgJ2MVyU_T_I0_yAHClMSnx0Nl9l49x0Q035p4ASWnDXSz4WBlDK2l",
@@ -24,6 +27,7 @@
     "jquery": "3.7.1"
   },
   "devDependencies": {
-    "@google/clasp": "^3.4.1"
+    "@google/clasp": "^3.4.1",
+    "@playwright/test": "1.63.0"
   }
 }

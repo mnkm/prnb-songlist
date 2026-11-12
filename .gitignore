@@ -2,3 +2,5 @@ node_modules/
 .clasprc.json
 *.log
 vendor/
+test-results/
+playwright-report/

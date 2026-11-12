@@ -30,7 +30,11 @@ HTML・CSS・JavaScript だけで作っており、ビルドツールは使い�
 ├── scripts/
 │   └── copy-vendor.mjs  # ライブラリを node_modules から vendor/ へコピーする
 ├── vendor/         # npm からコピーしたライブラリ(リポジトリには含めない)
-└── gas/            # データを返す GAS のソース(clasp で管理)
+├── gas/            # データを返す GAS のソース(clasp で管理)
+├── tests/
+│   ├── e2e/        # 画面のテスト(Playwright)
+│   └── gas/        # GAS のテスト(Node.js のテストランナー)
+└── playwright.config.mjs  # 画面のテストの設定
 ```
 
 ## ローカルでの動作確認
@@ -41,6 +45,20 @@ HTML・CSS・JavaScript だけで作っており、ビルドツールは使い�
 npm install
 npx serve .
 ```
+
+## テスト
+
+`npm test` で、今の動作が変わっていないかを確かめます。HTML・CSS・JavaScript や GAS を変えたら、push する前に実行します。
+
+```bash
+npx playwright install chromium   # 最初に一度だけ。テストで使うブラウザを入れる
+npm test
+```
+
+- 画面のテスト(`tests/e2e/`): テスト用のサーバーでページを開き、タレントの切り替え、絞り込み、キーワード検索、行のコピー、テーマ、メニューなどの動作を確かめます。楽曲データは GAS から読まず、`tests/e2e/fixtures.mjs` の架空のデータを返すので、インターネットに接続しなくても動きます。
+- GAS のテスト(`tests/gas/`): `gas/コード.js` を、スプレッドシートやキャッシュの代わりのデータで動かし、返す JSON とキャッシュの扱いを確かめます。Node.js 22 以降が必要です。
+
+動作を意図して変えたときは、合わせてテストも直します。
 
 ## デプロイ
 
