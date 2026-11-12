@@ -13,7 +13,10 @@ function createCache(initial = {}) {
         store,
         get: key => (key in store ? store[key] : null),
         getAll: keys => Object.fromEntries(keys.filter(k => k in store).map(k => [k, store[k]])),
-        putAll: entries => Object.assign(store, entries)
+        putAll: (entries, expiration) => {
+            store.lastExpiration = expiration;
+            Object.assign(store, entries);
+        }
     };
 }
 
@@ -93,6 +96,21 @@ test('見出しの名前で列を対応づけ、使わない列と曲名が空�
     });
 });
 
+test('見出しの列の順番が違っても、名前で対応づける', () => {
+    const { gas } = loadGas({
+        tables: {
+            [NINA_SHEET]: [
+                ['アーティスト', 'メモ', '楽曲', 'よみ'],
+                ['アーティストA', '', '青い空', 'あおいそら']
+            ]
+        }
+    });
+
+    assert.deepEqual(parse(gas.doGet({ parameter: { talent: 'nina' } })), {
+        rows: [{ artist: 'アーティストA', title: '青い空', reading: 'あおいそら' }]
+    });
+});
+
 test('talent がなければ桃瀬になのデータを返す', () => {
     const { gas, opened } = loadGas({ tables: { [NINA_SHEET]: [['楽曲'], ['青い空']] } });
 
@@ -122,6 +140,8 @@ test('読んだデータをキャッシュに入れ、次からはキャッシ�
     const firstBody = first.gas.doGet({ parameter: { talent: 'nina' } }).text;
     assert.equal(cache.store.songlist_nina_count, '1');
     assert.equal(cache.store.songlist_nina_0, firstBody);
+    // キャッシュは 5 分で切れる
+    assert.equal(cache.store.lastExpiration, 300);
 
     const second = loadGas({ tables, cache });
     assert.equal(second.gas.doGet({ parameter: { talent: 'nina' } }).text, firstBody);

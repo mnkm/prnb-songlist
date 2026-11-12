@@ -3,13 +3,30 @@ import { test, expect } from '@playwright/test';
 import { SONGS, manySongs } from './fixtures.mjs';
 import { mockGas, blockExternal, openPage, visibleTitles } from './helpers.mjs';
 
+// テストが待っていないダイアログ(DataTables の警告など)。Playwright は黙って閉じるので、記録して失敗にする
+let unexpectedDialogs = [];
+
 test.beforeEach(async ({ page }) => {
+    unexpectedDialogs = [];
+    expectDialog = false;
     await blockExternal(page);
     // スクリプトのエラーが起きたらテストを失敗させる
     page.on('pageerror', error => {
         throw error;
     });
+    page.on('dialog', dialog => {
+        if (!expectDialog) {
+            unexpectedDialogs.push(dialog.message());
+        }
+    });
 });
+
+test.afterEach(() => {
+    expect(unexpectedDialogs).toEqual([]);
+});
+
+// 読み込みの失敗のテストでだけ、ダイアログを待つ
+let expectDialog = false;
 
 test.describe('読み込みとタレントの切り替え', () => {
     test('最初は桃瀬になの曲を、曲名の順に表示する', async ({ page }) => {
@@ -76,8 +93,11 @@ test.describe('読み込みとタレントの切り替え', () => {
         await page.goto('./');
         await page.locator('#talentFilter').selectOption('ren');
         await expect(page.locator('#grid tbody tr')).toHaveCount(2);
+        const ninaFinished = page.waitForEvent('requestfinished', request => request.url().includes('talent=nina'));
         releaseNina();
-        await page.waitForTimeout(300);
+        await ninaFinished;
+        // 届いた応答の処理(jQuery のコールバック)が終わるのを待つ
+        await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 0)));
 
         expect(await visibleTitles(page)).toEqual(['緑の葉', '赤い実']);
     });
@@ -182,6 +202,18 @@ test.describe('表の表示', () => {
         await expect(page.locator('.dataTables_info')).toHaveText('30 件中 1〜25 件');
     });
 
+    test('列の見出しで並べ替え、ページを送れる', async ({ page }) => {
+        await mockGas(page, () => ({ rows: manySongs(15) }));
+        await openPage(page);
+
+        await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
+        expect((await visibleTitles(page))[0]).toBe('曲015');
+
+        await page.locator('.dataTables_paginate .paginate_button.next').click();
+        await expect(page.locator('.dataTables_info')).toHaveText('15 件中 11〜15 件');
+        expect(await visibleTitles(page)).toEqual(['曲005', '曲004', '曲003', '曲002', '曲001']);
+    });
+
     test('スプレッドシートの文字は HTML として解釈せず、そのまま表示する', async ({ page }) => {
         await mockGas(page, () => ({
             rows: [{ reading: 'a', title: '<img src=x onerror="window.__xss=1">', artist: '<b>太字</b>', category: '<i>c</i>', genre: '', type: '' }]
@@ -218,6 +250,7 @@ test.describe('読み込みの失敗', () => {
         ['通信に失敗したとき', () => 'abort']
     ]) {
         test(`${name}は知らせて、表を空にする`, async ({ page }) => {
+            expectDialog = true;
             let fail = false;
             await mockGas(page, talent => (fail ? handler() : { rows: SONGS[talent] }));
             await openPage(page);
@@ -248,8 +281,21 @@ test.describe('曲のコピー', () => {
 
         await page.locator('#grid tbody tr', { hasText: '青い空' }).click();
 
-        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('青い空 / アーティストA');
         await expect(page.locator('#toast')).toHaveText('コピーしました: 青い空 / アーティストA');
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('青い空 / アーティストA');
+    });
+
+    test('コピーできないときは、失敗を知らせる', async ({ page }) => {
+        await page.addInitScript(() => {
+            navigator.clipboard.writeText = () => Promise.reject(new Error('denied'));
+        });
+        await mockGas(page);
+        await openPage(page);
+
+        await page.locator('#grid tbody tr', { hasText: '青い空' }).click();
+
+        await expect(page.locator('#toast')).toHaveText('クリップボードへのコピーに失敗しました');
+        await expect(page.locator('#toast')).toHaveClass(/is-error/);
     });
 
     test('「楽曲のみ」を選ぶと曲名だけをコピーし、次に開いたときも覚えている', async ({ page }) => {
@@ -261,6 +307,7 @@ test.describe('曲のコピー', () => {
         await expect(page.locator('input[name="copyFormat"][value="titleOnly"]')).toBeChecked();
         await page.locator('#closeMenuButton').click();
         await page.locator('#grid tbody tr', { hasText: '黄色い花' }).click();
+        await expect(page.locator('#toast')).toHaveText('コピーしました: 黄色い花');
         expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('黄色い花');
 
         await openPage(page);
@@ -304,6 +351,11 @@ test.describe('テーマ', () => {
         expect(await accent()).toBe('#fff0f3');
         await page.locator('#talentFilter').selectOption('ren');
         await expect.poll(accent).toBe('#fff2da');
+
+        // ダークに切り替えると、ダーク用の色にする
+        await page.locator('#menuButton').click();
+        await page.locator('.theme-toggle-track').click();
+        await expect.poll(accent).toBe('#a17a25');
     });
 });
 
@@ -335,7 +387,7 @@ test.describe('メニュー', () => {
 test.describe('スマートフォンの幅', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('カテゴリの列を隠し、絞り込みとキーワードの欄を閉じて開く', async ({ page }) => {
+    test('カテゴリの列を隠し、絞り込みとキーワードの欄を閉じた状態で開く', async ({ page }) => {
         await mockGas(page);
         await openPage(page);
 

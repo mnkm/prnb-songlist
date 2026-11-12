@@ -5,7 +5,7 @@ import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const PORT = Number(process.env.PORT || 4173);
+const PORT = Number(process.env.SONGLIST_TEST_PORT || 4173);
 const TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -18,7 +18,14 @@ const TYPES = {
 };
 
 createServer(async (req, res) => {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    let pathname;
+    try {
+        pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    } catch (error) {
+        res.writeHead(400);
+        res.end('bad request');
+        return;
+    }
     const file = resolve(ROOT, '.' + (pathname.endsWith('/') ? pathname + 'index.html' : pathname));
     // リポジトリの外のファイルは返さない
     if (!file.startsWith(ROOT.replace(/[\\/]$/, '') + sep)) {
@@ -34,6 +41,7 @@ createServer(async (req, res) => {
         res.writeHead(404);
         res.end('not found');
     }
-}).listen(PORT, () => {
-    console.log(`http://localhost:${PORT}/`);
+// 同じネットワークのほかの機器からは開けないよう、この PC の中だけで待ち受ける
+}).listen(PORT, '127.0.0.1', () => {
+    console.log(`http://127.0.0.1:${PORT}/`);
 });
