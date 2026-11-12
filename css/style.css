@@ -1,143 +1,182 @@
- .noto-sans-jp-regular {
+/* 色の既定値(ライトテーマ)。ダークテーマは下の html[data-theme="dark"] の 1 か所で上書きする。
+   --accent-color(淡い色)と --accent-strong(濃い色)は、選んだタレントに合わせて JavaScript から設定する */
+:root {
+  --accent-color: #ebf8ff;
+  --accent-strong: #2a6f99;
+  --accent-text: #fff;
+  --page-background: #fff;
+  --surface-background: #fff;
+  --subtle-background: #f6f7f8;
+  --text-color: #333;
+  --heading-text-color: #111;
+  --muted-text-color: #666;
+  --border-color: #ddd;
+  --input-background: #fff;
+  --title-icon-color: #0F2A4A;
+  --link-color: #2a6496;
+  --overlay-background: rgba(255, 255, 255, 0.7);
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --accent-text: #181a1b;
+  --page-background: #181a1b;
+  --surface-background: #242627;
+  --subtle-background: #202324;
+  --text-color: #e8e6e3;
+  --heading-text-color: #fff;
+  --muted-text-color: #b8b5b0;
+  --border-color: #4a4d4f;
+  --input-background: #303335;
+  --title-icon-color: #EAF4FF;
+  --link-color: #8fc7ff;
+  --overlay-background: rgba(24, 26, 27, 0.7);
+  color-scheme: dark;
+}
+
+.noto-sans-jp-regular {
   font-family: "Noto Sans JP", sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
 }
 
+/* hidden を付けた要素は、Bootstrap の .btn などの display より優先して隠す */
+[hidden] {
+  display: none !important;
+}
+
 /* html, body固定 */
 html,
 body {
-    height: 100%;
-    overflow: hidden;
+  height: 100%;
+  overflow: hidden;
   background-color: var(--page-background);
   color: var(--text-color);
 }
 
-/* タイトル下端に合わせてJavaScriptからtopを設定するテーマスイッチ */
-.top-controls {
-  position: fixed;
-  top: 12px;
-  right: 18px;
-  z-index: 1001;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+a {
+  color: var(--link-color);
+}
+
+/* キーボードで選んだ所は、タレントの濃い色の枠で示す */
+:focus-visible,
+.btn:focus-visible,
+.form-control:focus {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.form-control:focus {
+  border-color: var(--accent-strong);
+  box-shadow: none;
+}
+
+.form-control {
+  background-color: var(--input-background);
+  border-color: var(--border-color);
+  color: var(--text-color);
+  box-shadow: none;
+}
+
+.form-control::placeholder {
+  color: var(--muted-text-color);
+}
+
+.btn-default {
+  background-color: var(--input-background);
+  border-color: var(--border-color);
   color: var(--text-color);
 }
 
-.theme-toggle {
-  position: relative;
-  display: block;
-  width: 46px;
-  height: 26px;
+.btn-default:hover,
+.btn-default:focus {
+  background-color: var(--subtle-background);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+/* ページ全体のレイアウト */
+.container-fluid {
+  height: 100%;
+}
+
+.page-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* タイトルとメニューのボタン */
+.site-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.page-title {
   margin: 0;
-  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.theme-toggle input {
-  position: absolute;
-  opacity: 0;
+.page-title-icon {
+  width: 2.4em;
+  height: 2.4em;
+  flex: 0 0 auto;
+  color: var(--title-icon-color);
 }
 
-.theme-toggle-track {
-  position: relative;
+.page-title-icon path:nth-child(2) {
+  fill: currentColor;
+}
+
+.page-title-text {
   display: block;
-  width: 46px;
-  height: 26px;
-  border: 1px solid var(--border-color);
-  border-radius: 13px;
-  background-color: var(--input-background);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: max-content;
 }
 
-.theme-toggle-thumb {
-  position: absolute;
-  top: 50%;
-  left: 2px;
-  z-index: 1;
+.page-title-main {
   display: block;
-  box-sizing: border-box;
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  background-color: #fff;
-  transform: translateY(-50%);
-  transition: transform 0.2s ease;
+  color: var(--heading-text-color);
 }
 
-html[data-theme="light"] .theme-toggle-thumb {
-  left: 3px;
+.page-title-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 50%;
   background-color: var(--accent-color);
-}
-
-html[data-theme="light"] .theme-toggle-icon-light {
-  left: 5px;
-}
-
-.theme-toggle-icon {
-  position: absolute;
-  top: 50%;
-  left: 4px;
-  z-index: 2;
-  width: 16px;
-  height: 16px;
-  pointer-events: none;
-  color: #333;
-  transform: translateY(-50%);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.theme-toggle-icon-dark {
-  color: var(--accent-color);
-  opacity: 0;
-  transform: translate(20px, -50%);
-}
-
-.theme-toggle input:checked + .theme-toggle-track .theme-toggle-icon-light {
-  opacity: 0;
-  transform: translate(-20px, -50%);
-}
-
-.theme-toggle input:checked + .theme-toggle-track .theme-toggle-icon-dark {
-  opacity: 1;
-}
-
-.theme-toggle input:checked + .theme-toggle-track {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-.theme-toggle input:checked + .theme-toggle-track .theme-toggle-thumb {
-  transform: translate(20px, -50%);
-  background-color: #fff;
-}
-
-.theme-toggle input:focus-visible + .theme-toggle-track {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
+  color: var(--heading-text-color);
 }
 
 .menu-button,
 .menu-close-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 1px solid var(--border-color);
   border-radius: 10px;
   background: var(--surface-background);
-  color: var(--text-color);
+  color: var(--title-icon-color);
+  cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .menu-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  cursor: pointer;
-  color: var(--title-icon-color, #0F2A4A);
+  width: 40px;
+  height: 40px;
+}
+
+.menu-close-button {
+  width: 36px;
+  height: 36px;
 }
 
 .menu-button:hover,
@@ -145,12 +184,381 @@ html[data-theme="light"] .theme-toggle-icon-light {
   transform: translateY(-1px);
 }
 
-.menu-button:focus-visible,
-.menu-close-button:focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
+/* タレントの切り替え */
+.talent-switch {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
+.talent-button {
+  min-height: 40px;
+  padding: 6px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-background);
+  color: var(--text-color);
+  font-size: 14px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.talent-name-short {
+  display: none;
+}
+
+.talent-button:hover {
+  border-color: var(--accent-strong);
+}
+
+/* 選んでいるタレントは、淡い色の塗りに加えて、濃い色の枠と太字で示す */
+.talent-button[aria-pressed="true"] {
+  border: 2px solid var(--accent-strong);
+  padding: 5px 15px;
+  background: var(--accent-color);
+  color: var(--heading-text-color);
+  font-weight: 700;
+}
+
+/* キーワード検索と絞り込み */
+.search-panel {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--subtle-background);
+}
+
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 560px;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--muted-text-color);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-input {
+  height: 40px;
+  padding-left: 36px;
+  padding-right: 40px;
+}
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-text-color);
+  transform: translateY(-50%);
+}
+
+.search-clear:hover {
+  background: var(--subtle-background);
+  color: var(--text-color);
+}
+
+.filter-toggle {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-toggle-icon {
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+
+.filter-toggle[aria-expanded="true"] .filter-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.filter-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clear-filters {
+  height: 40px;
+  color: var(--link-color);
+}
+
+.filter-area > .row {
+  padding-top: 10px;
+}
+
+.filter-item label {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-text-color);
+}
+
+/* 曲数・説明・表示件数の行 */
+.table-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.table-status {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.song-count {
+  font-weight: 700;
+  color: var(--heading-text-color);
+}
+
+.copy-hint {
+  font-size: 13px;
+  color: var(--muted-text-color);
+}
+
+.page-length-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-length-label {
+  margin-right: 4px;
+  font-size: 13px;
+  color: var(--muted-text-color);
+}
+
+.page-length-button {
+  width: 48px;
+}
+
+.page-length-button.active,
+.page-length-button.active:hover,
+.page-length-button.active:focus {
+  background-color: var(--accent-color);
+  border: 2px solid var(--accent-strong);
+  color: var(--heading-text-color);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+/* 読み込みに失敗したとき */
+.load-error {
+  padding: 32px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.load-error p {
+  margin-bottom: 12px;
+}
+
+.table-area.has-error .dataTables_wrapper {
+  display: none;
+}
+
+/* 表。縦の罫線と縞はなくし、横の線だけで行を区切る */
+table.dataTable {
+  border-collapse: collapse;
+  color: var(--text-color);
+}
+
+table.dataTable,
+table.dataTable tbody tr,
+table.dataTable tbody td {
+  background-color: var(--surface-background);
+}
+
+table.dataTable thead th {
+  border-bottom: 2px solid var(--accent-strong) !important;
+  background-color: var(--surface-background);
+  color: var(--heading-text-color);
+  font-weight: 700;
+}
+
+table.dataTable tbody td {
+  border-top: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+table.dataTable.no-footer,
+.dataTables_scrollBody {
+  border-bottom: 0 !important;
+}
+
+table.dataTable tbody td:nth-child(2) {
+  color: var(--muted-text-color);
+}
+
+table.dataTable tbody tr {
+  cursor: pointer;
+}
+
+table.dataTable tbody tr:hover > td,
+table.dataTable tbody tr:focus-visible > td {
+  background-color: var(--accent-color);
+}
+
+table.dataTable tbody tr:focus-visible {
+  outline-offset: -2px;
+}
+
+table.dataTable tbody td.dataTables_empty {
+  cursor: default;
+  color: var(--muted-text-color);
+}
+
+.table-area .dataTables_wrapper {
+  display: block;
+}
+
+.dataTables_scrollBody {
+  min-height: 0;
+  overflow-y: auto !important;
+}
+
+.table-area .dataTable th:nth-child(3),
+.table-area .dataTable td:nth-child(3) {
+  white-space: nowrap;
+}
+
+/* スマートフォンの幅で、曲名の下に出すアーティストとカテゴリ */
+.song-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted-text-color);
+}
+
+.song-sub-artist {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-sub-category {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  float: none;
+  clear: both;
+  color: var(--text-color);
+}
+
+.dataTables_wrapper .dataTables_info {
+  font-size: 13px;
+  color: var(--muted-text-color);
+}
+
+/* ページ送り */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 34px;
+  height: 34px;
+  margin-left: 4px;
+  padding: 6px 4px;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 4px;
+  background: var(--input-background) !important;
+  color: var(--text-color) !important;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: none;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+  background: var(--subtle-background) !important;
+  border-color: var(--accent-strong) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--accent-color) !important;
+  border: 2px solid var(--accent-strong) !important;
+  color: var(--heading-text-color) !important;
+  font-weight: 700;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  background: var(--subtle-background) !important;
+  border-color: var(--border-color) !important;
+  color: var(--muted-text-color) !important;
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dataTables_wrapper .dataTables_paginate .ellipsis {
+  color: var(--muted-text-color);
+}
+
+/* フッター */
+.page-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  padding: 8px 15px;
+  background-color: var(--page-background);
+  color: var(--text-color);
+  text-align: center;
+}
+
+/* メニュー */
 .menu-backdrop {
   position: fixed;
   inset: 0;
@@ -178,11 +586,14 @@ html[data-theme="light"] .theme-toggle-icon-light {
   border-left: 1px solid var(--border-color);
   box-shadow: -8px 0 18px rgba(0, 0, 0, 0.12);
   transform: translateX(105%);
-  transition: transform 0.25s ease;
+  visibility: hidden;
+  transition: transform 0.25s ease, visibility 0s linear 0.25s;
 }
 
 .side-menu.is-open {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.25s ease, visibility 0s;
 }
 
 .side-menu-header {
@@ -198,17 +609,7 @@ html[data-theme="light"] .theme-toggle-icon-light {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-}
-
-.menu-close-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  cursor: pointer;
-  color: var(--title-icon-color, #0F2A4A);
+  color: var(--heading-text-color);
 }
 
 .side-menu-section {
@@ -227,7 +628,6 @@ html[data-theme="light"] .theme-toggle-icon-light {
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--muted-text-color);
-  text-transform: uppercase;
 }
 
 .side-menu-about {
@@ -236,29 +636,97 @@ html[data-theme="light"] .theme-toggle-icon-light {
   line-height: 1.7;
 }
 
-.side-menu-theme-control {
+/* テーマのスイッチ。「ダークモード」の文字を押しても切り替わる */
+.theme-toggle-menu {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 12px;
+  margin: 0;
   padding: 12px 10px;
   border: 1px solid var(--border-color);
   border-radius: 10px;
   background: var(--input-background);
-}
-
-.theme-toggle-menu {
-  margin: 0;
-}
-
-.current-theme-mode {
-  min-width: 42px;
-  font-size: 13px;
   font-weight: 700;
-  color: var(--text-color);
-  text-align: left;
+  cursor: pointer;
 }
 
+.theme-toggle-input {
+  position: absolute;
+  opacity: 0;
+}
+
+.theme-toggle-track {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
+  background-color: var(--subtle-background);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  z-index: 1;
+  display: block;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background-color: var(--accent-strong);
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: #fff;
+  transform: translateY(-50%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle-icon-dark {
+  color: var(--accent-strong);
+  opacity: 0;
+  transform: translate(20px, -50%);
+}
+
+.theme-toggle-input:checked + .theme-toggle-track {
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.theme-toggle-input:checked + .theme-toggle-track .theme-toggle-icon-light {
+  opacity: 0;
+  transform: translate(-20px, -50%);
+}
+
+.theme-toggle-input:checked + .theme-toggle-track .theme-toggle-icon-dark {
+  opacity: 1;
+}
+
+.theme-toggle-input:checked + .theme-toggle-track .theme-toggle-thumb {
+  transform: translate(20px, -50%);
+  background-color: #fff;
+}
+
+.theme-toggle-input:focus-visible + .theme-toggle-track {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+/* コピーの形式 */
 .copy-format-settings {
   display: flex;
   flex-direction: column;
@@ -272,8 +740,8 @@ html[data-theme="light"] .theme-toggle-icon-light {
 .copy-format-option {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  margin: 0;
   padding: 10px 12px;
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -281,340 +749,61 @@ html[data-theme="light"] .theme-toggle-icon-light {
   font-size: 14px;
   color: var(--text-color);
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .copy-format-option.is-selected {
+  border: 2px solid var(--accent-strong);
+  padding: 9px 11px;
   background: var(--accent-color);
-  border-color: var(--accent-color);
-  color: var(--surface-background);
 }
 
 .copy-format-option span {
   flex: 1;
-  font-weight: 600;
-}
-
-.copy-format-option.is-selected span {
-  color: var(--text-color);
-}
-
-.copy-format-option input[type="radio"] {
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  min-height: 26px;
-  margin: 0;
-  cursor: pointer;
-  flex: 0 0 26px;
-  accent-color: var(--accent-color);
-  appearance: auto;
-  -webkit-appearance: radio;
-}
-
-/* ページ全体のレイアウト */
-.container-fluid {
-    height: 100%;
-}
-
-.page-wrapper {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.page-title {
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-title-icon {
-  width: 2.4em;
-  height: 2.4em;
-  flex: 0 0 auto;
-  color: var(--title-icon-color, #09244BFF);
-}
-
-.page-title-icon path:nth-child(2) {
-  fill: currentColor;
-}
-
-.page-title-text {
-  display: block;
-  width: max-content;
-}
-
-.page-title-main,
-.page-title-sub {
-  display: block;
-}
-
-.page-title-sub {
-  display: flex;
-  justify-content: space-between;
-  font-size: 50%;
-  background-color: var(--accent-color);
-}
-
-/* フィルタ定義 */
-.filter-area {
-    flex: 0 0 auto;
-}
-
-.filter-area .col-sm-4:nth-child(n+4) {
-  margin-top: 12px;
-}
-
-.filter-area .col-sm-4:last-child {
-  margin-bottom: 3px;
-}
-
-.filter-area label {
-  font-weight: 400;
-}
-
-.filter-panel {
-  flex: 0 0 auto;
-  margin-bottom: 15px;
-  border-color: #ddd;
-}
-
-.filter-panel > .panel-heading {
-  background-color: var(--accent-color);
-  border-color: #ddd;
-  color: #000;
   font-weight: 700;
 }
 
-.filter-panel .panel-heading {
+.copy-format-option input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  flex: 0 0 22px;
+  accent-color: var(--accent-strong);
   cursor: pointer;
-}
-
-.filter-panel-icon {
-  float: right;
-  transition: transform 0.2s ease;
-}
-
-.filter-panel .panel-heading.collapsed .filter-panel-icon {
-  transform: rotate(180deg);
-}
-
-/* DataTablesのスクロール */
-.table-area {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.page-length-controls {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.page-length-label {
-  margin-right: 4px;
-}
-
-.page-length-button {
-  width: 52px;
-}
-
-.page-length-button.active,
-.page-length-button.active:hover,
-.page-length-button.active:focus {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-  box-shadow: none;
-}
-
-.page-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  padding: 8px 15px;
-  background-color: #fff;
-  text-align: center;
-}
-
-.dataTables_scrollBody {
-  min-height: 0;
-    border-radius: 0 0 4px 4px;
-    overflow-y: auto !important;
-}
-
-.table-area .dataTables_wrapper {
-  display: block;
-}
-
-.table-area .dataTables_scroll {
-  overflow: hidden;
-  border-radius: 4px;
-}
-
-.table-area .dataTables_scrollHead {
-  overflow: hidden;
-  border-radius: 4px 4px 0 0;
-}
-
-.table-area .dataTables_scrollHeadInner table {
-  overflow: hidden;
-  border-radius: 4px 4px 0 0;
-}
-
-.table-area .dataTables_scrollHeadInner table thead th:first-child {
-  border-top-left-radius: 4px !important;
-}
-
-.table-area .dataTables_scrollHeadInner table thead th:last-child {
-  border-top-right-radius: 4px !important;
-}
-
-.table-area .dataTables_scrollBody {
-  border-radius: 0 0 4px 4px;
-}
-
-.table-area .dataTables_scrollBody table {
-  overflow: hidden;
-  border-radius: 0 0 4px 4px;
-}
-
-.table-area .dataTables_scrollBody table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 4px !important;
-}
-
-.table-area .dataTables_scrollBody table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 4px !important;
-}
-
-.table-area .dataTables_info,
-.table-area .dataTables_paginate {
-  float: none;
-  clear: both;
-}
-
-.table-area .dataTable th:nth-child(3),
-.table-area .dataTable td:nth-child(3) {
-  white-space: nowrap;
 }
 
 /* ローディング */
 .loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.7);
-    z-index: 9999;
-    display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  background: var(--overlay-background);
 }
 
 .loading-box {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    font-size: 16px;
-    color: #333;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
 }
 
 .spinning {
-    font-size: 32px;
-    animation: spin 1s linear infinite;
+  font-size: 32px;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* ライトモードの既定値。ダークモードや手動テーマで下部から上書きする */
-:root {
-  --accent-color: #337ab7;
-  --page-background: #fff;
-  --surface-background: #fff;
-  --text-color: #333;
-  --heading-text-color: #000;
-  --muted-text-color: #777;
-  --border-color: #ddd;
-  --input-background: #fff;
-  --title-icon-color: #0F2A4A;
-}
-
-html[data-theme="dark"] {
-  --title-icon-color: #EAF4FF;
-}
-
-/* テーブルヘッダと罫線 */
-table.dataTable thead th {
-  background-color: var(--accent-color);
-  color: var(--heading-text-color);
-}
-
-table.dataTable,
-table.dataTable th,
-table.dataTable td,
-.dataTables_scrollHeadInner,
-.dataTables_scrollHeadInner table {
-  border-color: var(--border-color) !important;
-}
-
-/* 選択・ホバー */
-table.dataTable tbody tr:hover {
-  background-color: color-mix(in srgb, var(--accent-color) 100%, gray);
-}
-
-/* ページネーション */
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-  display: inline-block;
-  box-sizing: border-box;
-  width: 34px;
-  height: 34px;
-  margin-left: 4px;
-  padding: 6px 0;
-  border: 1px solid #ccc !important;
-  border-radius: 4px;
-  background: #fff !important;
-  color: #333 !important;
-  line-height: 20px;
-  text-align: center;
-  box-shadow: none;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-  background: var(--accent-color) !important;
-  color: #000 !important;
-  border-color: var(--accent-color) !important;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
-  background: var(--accent-color) !important;
-  color: #000 !important;
-  border-color: var(--accent-color) !important;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-  background: #fff !important;
-  color: #999 !important;
-  border-color: #ddd !important;
-  cursor: default;
-}
-
-/* セレクト・入力のフォーカス */
-.form-control:focus {
-  border-color: #ddd;
-  box-shadow: 0 0 5px #ddd;
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* トースト通知 */
@@ -655,54 +844,90 @@ table.dataTable tbody tr:hover {
   }
 }
 
+/* スマートフォンの幅 */
 @media (max-width: 767px) {
   .container-fluid {
     padding-left: 10px;
     padding-right: 10px;
   }
 
-  .page-wrapper > h1 {
+  .site-header {
+    margin: 10px 0 10px;
+  }
+
+  .page-title {
     font-size: 20px;
-    margin-top: 10px;
-    margin-bottom: 10px;
   }
 
-  .filter-panel {
+  /* 5 名を下の名前だけにして、同じ幅で 1 段に並べる */
+  .talent-switch {
+    flex-wrap: nowrap;
+    gap: 4px;
     margin-bottom: 8px;
   }
 
-  .filter-panel .panel-body {
-    padding: 10px;
+  .talent-button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 6px 2px;
+    font-size: 13px;
   }
 
-  .filter-panel .row {
-    margin-left: 0;
-    margin-right: 0;
+  .talent-button[aria-pressed="true"] {
+    padding: 5px 1px;
   }
 
-  .filter-panel .col-sm-4 {
-    width: 100%;
-    float: none;
-    padding-left: 0;
-    padding-right: 0;
+  /* フルネームは画面には出さず、読み上げにだけ使う */
+  .talent-name-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .talent-name-short {
+    display: inline;
+  }
+
+
+  .search-panel {
     margin-bottom: 8px;
+    padding: 8px;
   }
 
-  .filter-area .col-sm-4:nth-child(n+4) {
-    margin-top: 0;
+  .search-box {
+    flex: 1 1 100%;
+    max-width: none;
   }
 
-  .filter-panel .form-control {
-    width: 100%;
-    max-width: 100%;
+  .search-input,
+  .filter-toggle,
+  .clear-filters {
+    height: 44px;
   }
 
-  .filter-panel .col-sm-4:last-child {
-    margin-bottom: 0;
+  .filter-item + .filter-item {
+    margin-top: 8px;
   }
 
-  .table-area {
-    width: 100%;
+  .page-length-label-long {
+    display: none;
+  }
+
+  /* 押しやすい大きさにする */
+  .page-length-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    min-width: 36px;
+    height: 44px;
+    margin-left: 2px;
+    padding: 11px 2px;
   }
 
   .dataTables_scrollBody,
@@ -710,237 +935,14 @@ table.dataTable tbody tr:hover {
     width: 100% !important;
   }
 
+  /* 表の欄が画面に収まらないときは、欄ごとスクロールしてページ送りまで届くようにする */
+  .table-area {
+    overflow-y: auto;
+  }
+
   .dataTables_wrapper .dataTables_info,
   .dataTables_wrapper .dataTables_paginate {
-    float: none;
     text-align: center;
     margin-top: 8px;
   }
-}
-
-/* システム設定がダークの場合の初期テーマ */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --page-background: #181a1b;
-    --surface-background: #242627;
-    --text-color: #e8e6e3;
-    --heading-text-color: #fff;
-    --muted-text-color: #b8b5b0;
-    --border-color: #4a4d4f;
-    --input-background: #303335;
-  }
-
-  .filter-panel,
-  .filter-panel .panel-body {
-    background-color: var(--surface-background);
-    border-color: var(--border-color);
-  }
-
-  .filter-panel > .panel-heading {
-    border-color: var(--border-color);
-    color: #fff;
-  }
-
-  .page-title-sub {
-    color: #fff;
-  }
-
-  table.dataTable thead th {
-    color: #fff;
-  }
-
-  .form-control,
-  .page-length-button,
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
-    background-color: var(--input-background) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-color) !important;
-  }
-
-  .form-control::placeholder {
-    color: var(--muted-text-color);
-  }
-
-  .page-length-button.active,
-  .page-length-button.active:hover,
-  .page-length-button.active:focus,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current,
-  .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
-    background-color: var(--accent-color) !important;
-    border-color: var(--accent-color) !important;
-    color: #fff !important;
-  }
-
-  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-    background-color: var(--surface-background) !important;
-    border-color: var(--border-color) !important;
-    color: var(--muted-text-color) !important;
-  }
-
-  table.dataTable,
-  table.dataTable tbody tr {
-    background-color: var(--surface-background);
-    color: var(--text-color);
-  }
-
-  table.dataTable tbody tr:nth-child(odd) {
-    background-color: #2b2e30;
-  }
-
-  table.dataTable tbody tr:nth-child(even) {
-    background-color: var(--surface-background);
-  }
-
-  table.dataTable tbody tr:hover {
-    background-color: color-mix(in srgb, var(--accent-color) 35%, var(--surface-background));
-  }
-
-  table.dataTable tbody td,
-  table.dataTable thead th,
-  .dataTables_scrollHeadInner,
-  .dataTables_scrollHeadInner table {
-    border-color: var(--border-color) !important;
-  }
-
-  .dataTables_wrapper .dataTables_info,
-  .dataTables_wrapper .dataTables_paginate,
-  .page-length-label {
-    color: var(--text-color);
-  }
-
-  .page-footer {
-    background-color: var(--page-background);
-    color: var(--text-color);
-  }
-
-  .page-footer a {
-    color: #8fc7ff;
-  }
-
-  .loading-overlay {
-    background: rgba(24, 26, 27, 0.7);
-  }
-
-  .loading-box {
-    color: var(--text-color);
-  }
-}
-
-/* 手動選択したテーマはシステム設定より優先する */
-html[data-theme="dark"] {
-  --page-background: #181a1b;
-  --surface-background: #242627;
-  --text-color: #e8e6e3;
-  --heading-text-color: #fff;
-  --muted-text-color: #b8b5b0;
-  --border-color: #4a4d4f;
-  --input-background: #303335;
-  color-scheme: dark;
-}
-
-html[data-theme="light"] {
-  --page-background: #fff;
-  --surface-background: #fff;
-  --text-color: #333;
-  --heading-text-color: #000;
-  --muted-text-color: #777;
-  --border-color: #ddd;
-  --input-background: #fff;
-  color-scheme: light;
-}
-
-html[data-theme="dark"] body {
-  background-color: var(--page-background);
-  color: var(--text-color);
-}
-
-html[data-theme="dark"] .filter-panel,
-html[data-theme="dark"] .filter-panel .panel-body {
-  background-color: var(--surface-background);
-  border-color: var(--border-color);
-}
-
-html[data-theme="dark"] .filter-panel > .panel-heading,
-html[data-theme="dark"] .page-title-sub,
-html[data-theme="dark"] table.dataTable thead th {
-  color: var(--heading-text-color);
-}
-
-html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .page-length-button,
-html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
-  background-color: var(--input-background) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-color) !important;
-}
-
-html[data-theme="dark"] .page-length-button.active,
-html[data-theme="dark"] .page-length-button.active:hover,
-html[data-theme="dark"] .page-length-button.active:focus,
-html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
-html[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
-  background-color: var(--accent-color) !important;
-  border-color: var(--accent-color) !important;
-  color: #fff !important;
-}
-
-html[data-theme="dark"] table.dataTable,
-html[data-theme="dark"] table.dataTable tbody tr,
-html[data-theme="dark"] table.dataTable tbody tr:nth-child(even) {
-  background-color: var(--surface-background);
-  color: var(--text-color);
-}
-
-html[data-theme="dark"] table.dataTable tbody tr:nth-child(odd) {
-  background-color: #2b2e30;
-}
-
-html[data-theme="dark"] .page-footer {
-  background-color: var(--page-background);
-  color: var(--text-color);
-}
-
-html[data-theme="light"] .filter-panel > .panel-heading,
-html[data-theme="light"] .page-title-sub,
-html[data-theme="light"] table.dataTable thead th {
-  color: var(--heading-text-color);
-}
-
-html[data-theme="light"] .page-length-button.active,
-html[data-theme="light"] .page-length-button.active:hover,
-html[data-theme="light"] .page-length-button.active:focus,
-html[data-theme="light"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
-html[data-theme="light"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
-  background-color: var(--accent-color) !important;
-  border-color: var(--accent-color) !important;
-  color: var(--heading-text-color) !important;
-}
-
-html[data-theme="light"] table.dataTable tbody tr:nth-child(odd) {
-  background-color: #f9f9f9;
-}
-
-html[data-theme="light"] table.dataTable tbody tr:nth-child(even) {
-  background-color: var(--surface-background);
-}
-
-html[data-theme="light"] .page-footer a {
-  color: #337ab7;
-}
-
-html[data-theme="light"] .loading-overlay {
-  background: rgba(255, 255, 255, 0.7);
-}
-
-/* DataTablesのセル背景に隠れないよう、hover色を行内のセルにも適用する */
-html[data-theme="light"] table.dataTable tbody tr:hover > *,
-html[data-theme="light"] table.dataTable tbody tr:hover {
-  background-color: color-mix(in srgb, var(--accent-color) 100%, gray) !important;
-}
-
-html[data-theme="dark"] table.dataTable tbody tr:hover > *,
-html[data-theme="dark"] table.dataTable tbody tr:hover {
-  background-color: color-mix(in srgb, var(--accent-color) 35%, var(--surface-background)) !important;
 }

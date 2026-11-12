@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { SONGS } from './fixtures.mjs';
 
 const GAS_PATTERN = 'https://script.google.com/**';
@@ -36,4 +37,16 @@ export async function openPage(page, query = '') {
 /** 表に出ている曲名の一覧 */
 export async function visibleTitles(page) {
     return page.locator('#grid tbody tr td:first-child').allTextContents();
+}
+
+/** タレントのボタンを押し、読み込みが終わるまで待つ */
+export async function selectTalent(page, talent) {
+    await page.locator(`.talent-button[data-talent="${talent}"]`).click();
+    await expectTalent(page, talent);
+    await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+}
+
+/** 選択中のタレントが talent だけであることを確かめる */
+export async function expectTalent(page, talent) {
+    await expect(page.locator('.talent-button[aria-pressed="true"]')).toHaveAttribute('data-talent', talent);
 }

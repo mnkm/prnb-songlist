@@ -36,7 +36,10 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- テーマ(ライト・ダーク)を最初に決める -->
+    <script src="js/theme-init.js"></script>
 
     <!-- jQuery -->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -55,20 +58,8 @@
 </head>
 
 <body class="noto-sans-jp-regular">
-    <div class="top-controls">
-        <button type="button" id="menuButton" class="menu-button" aria-label="メニューを開く" aria-expanded="false">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" aria-hidden="true">
-                <title>menu</title>
-                <g id="menu_fill" fill="none">
-                    <path d="M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z"/>
-                    <path fill="currentColor" d="M20 17.5a1.5 1.5 0 0 1 .144 2.993L20 20.5H4a1.5 1.5 0 0 1-.144-2.993L4 17.5zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 0 1 0-3zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 1 1 0-3z"/>
-                </g>
-            </svg>
-        </button>
-    </div>
-
     <div id="menuBackdrop" class="menu-backdrop" aria-hidden="true"></div>
-    <aside id="sideMenu" class="side-menu" aria-hidden="true">
+    <aside id="sideMenu" class="side-menu" aria-hidden="true" inert>
         <div class="side-menu-header">
             <h4>サイト設定</h4>
             <button type="button" id="closeMenuButton" class="menu-close-button" aria-label="メニューを閉じる">
@@ -84,8 +75,8 @@
         <div class="side-menu-section">
             <h5 class="side-menu-section-title">テーマ</h5>
             <div class="side-menu-theme-control">
-                <label class="theme-toggle theme-toggle-menu" aria-label="テーマ切り替え">
-                    <input type="checkbox" id="themeToggle" aria-label="テーマ">
+                <label class="theme-toggle-menu">
+                    <input type="checkbox" id="themeToggle" class="theme-toggle-input">
                     <span class="theme-toggle-track" aria-hidden="true">
                         <svg class="theme-toggle-icon theme-toggle-icon-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M12 19a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1m6.364-2.05.707.707a1 1 0 0 1-1.414 1.414l-.707-.707a1 1 0 0 1 1.414-1.414m-12.728 0a1 1 0 0 1 1.497 1.32l-.083.094-.707.707a1 1 0 0 1-1.497-1.32l.083-.094zM12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12m-8 5a1 1 0 0 1 .117 1.993L4 13H3a1 1 0 0 1-.117-1.993L3 11zm17 0a1 1 0 1 1 0 2h-1a1 1 0 1 1 0-2zM4.929 4.929a1 1 0 0 1 1.32-.083l.094.083.707.707a1 1 0 1 1-1.414 1.414l-.707-.707a1 1 0 0 1 0-1.414m14.142 0a1 1 0 0 1 0 1.414l-.707.707a1 1 0 1 1-1.414-1.414l.707-.707a1 1 0 0 1 1.414 0M12 2a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1" />
@@ -95,8 +86,8 @@
                         </svg>
                         <span class="theme-toggle-thumb"></span>
                     </span>
+                    <span class="theme-toggle-text">ダークモード</span>
                 </label>
-                <span id="currentThemeMode" class="current-theme-mode">ダークモード</span>
             </div>
         </div>
 
@@ -121,109 +112,109 @@
     </aside>
 
     <div class="container-fluid page-wrapper">
-        <!-- アイコンと2段組みのタイトル -->
-        <h1 class="page-title">
-            <svg class="page-title-icon" xmlns="http://www.w3.org/2000/svg" width="256px" height="256px" viewBox="0 0 24 24" role="img" aria-label="プレイリスト">
-                <title></title>
-                <g id="playlist_fill" fill="none">
-                    <path d="M24 0v24H0V0zM12.594 23.258l-.012.002-.071.035-.02.004-.014-.004-.071-.036c-.01-.003-.019 0-.024.006l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.003-.01-.009-.017-.016-.018m.264-.113-.014.002-.184.093-.01.01-.003.011.018.43.005.012.008.008.201.092c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.003-.011.018-.43-.003-.012-.01-.01z" />
-                    <path fill="currentColor" d="m17.33 4.055 2.986.996a1 1 0 0 1-.632 1.898L18 6.387V17.5a3.5 3.5 0 1 1-2-3.163V5.014c0-.69.675-1.177 1.33-.959M8 17a1 1 0 1 1 0 2H4a1 1 0 0 1 0-2zm2-6a1 1 0 1 1 0 2H4a1 1 0 0 1 0-2zm3-6a1 1 0 0 1 .117 1.993L13 7H4a1 1 0 0 1-.117-1.993L4 5z" />
-                </g>
-            </svg>
-            <span class="page-title-text">
-                <span class="page-title-main">PROJECT NEBULA</span>
-                <span class="page-title-sub"><span>タ</span><span>レ</span><span>ン</span><span>ト</span><span>別</span><span>楽</span><span>曲</span><span>リ</span><span>ス</span><span>ト</span></span>
-            </span>
-        </h1>
+        <header class="site-header">
+            <!-- アイコンと2段組みのタイトル -->
+            <h1 class="page-title">
+                <svg class="page-title-icon" xmlns="http://www.w3.org/2000/svg" width="256px" height="256px" viewBox="0 0 24 24" role="img" aria-label="プレイリスト">
+                    <title></title>
+                    <g id="playlist_fill" fill="none">
+                        <path d="M24 0v24H0V0zM12.594 23.258l-.012.002-.071.035-.02.004-.014-.004-.071-.036c-.01-.003-.019 0-.024.006l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.003-.01-.009-.017-.016-.018m.264-.113-.014.002-.184.093-.01.01-.003.011.018.43.005.012.008.008.201.092c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.003-.011.018-.43-.003-.012-.01-.01z" />
+                        <path fill="currentColor" d="m17.33 4.055 2.986.996a1 1 0 0 1-.632 1.898L18 6.387V17.5a3.5 3.5 0 1 1-2-3.163V5.014c0-.69.675-1.177 1.33-.959M8 17a1 1 0 1 1 0 2H4a1 1 0 0 1 0-2zm2-6a1 1 0 1 1 0 2H4a1 1 0 0 1 0-2zm3-6a1 1 0 0 1 .117 1.993L13 7H4a1 1 0 0 1-.117-1.993L4 5z" />
+                    </g>
+                </svg>
+                <span class="page-title-text">
+                    <span class="page-title-main">PROJECT NEBULA</span>
+                    <span class="page-title-sub"><span>タ</span><span>レ</span><span>ン</span><span>ト</span><span>別</span><span>楽</span><span>曲</span><span>リ</span><span>ス</span><span>ト</span></span>
+                </span>
+            </h1>
+            <button type="button" id="menuButton" class="menu-button" aria-label="メニューを開く" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" aria-hidden="true">
+                    <title>menu</title>
+                    <g id="menu_fill" fill="none">
+                        <path d="M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z"/>
+                        <path fill="currentColor" d="M20 17.5a1.5 1.5 0 0 1 .144 2.993L20 20.5H4a1.5 1.5 0 0 1-.144-2.993L4 17.5zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 0 1 0-3zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 1 1 0-3z"/>
+                    </g>
+                </svg>
+            </button>
+        </header>
 
-        <div class="panel panel-default filter-panel">
-            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#talentFilterPanel" aria-expanded="true" aria-controls="talentFilterPanel">
-                <span id="talentPanelTitle">タレント</span>
-                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
+        <!-- タレントの切り替え。選べるタレントはこのボタンの並びから取る。スマートフォンの幅では下の名前だけを出す(フルネームは読み上げ用) -->
+        <div class="talent-switch" role="group" aria-label="タレント">
+            <button type="button" class="talent-button" data-talent="nina" aria-pressed="false"><span class="talent-name-full">桃瀬にな</span><span class="talent-name-short" aria-hidden="true">にな</span></button>
+            <button type="button" class="talent-button" data-talent="yura" aria-pressed="false"><span class="talent-name-full">碓氷ゆら</span><span class="talent-name-short" aria-hidden="true">ゆら</span></button>
+            <button type="button" class="talent-button" data-talent="ren" aria-pressed="false"><span class="talent-name-full">鈴莉れん</span><span class="talent-name-short" aria-hidden="true">れん</span></button>
+            <button type="button" class="talent-button" data-talent="hinata" aria-pressed="false"><span class="talent-name-full">菜鳥ひなた</span><span class="talent-name-short" aria-hidden="true">ひなた</span></button>
+            <button type="button" class="talent-button" data-talent="ruka" aria-pressed="false"><span class="talent-name-full">紫雨るか</span><span class="talent-name-short" aria-hidden="true">るか</span></button>
+        </div>
+
+        <!-- キーワード検索と絞り込み -->
+        <div class="search-panel">
+            <div class="search-row">
+                <div class="search-box">
+                    <span class="glyphicon glyphicon-search search-icon" aria-hidden="true"></span>
+                    <input type="text" id="textFilter" class="form-control search-input" placeholder="曲名・アーティスト・読みで検索" aria-label="キーワード検索" autocomplete="off">
+                    <button type="button" id="clearTextButton" class="search-clear" aria-label="キーワードを消す" hidden>
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <button type="button" id="filterToggle" class="btn btn-default filter-toggle" data-toggle="collapse" data-target="#filterArea" aria-expanded="true" aria-controls="filterArea">
+                    <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+                    <span>絞り込み</span>
+                    <span id="filterBadge" class="filter-badge" hidden>設定中</span>
+                    <span class="glyphicon glyphicon-chevron-down filter-toggle-icon" aria-hidden="true"></span>
+                </button>
+                <button type="button" id="clearFiltersButton" class="btn btn-link clear-filters" hidden>条件をクリア</button>
             </div>
-            <div id="talentFilterPanel" class="panel-collapse collapse in">
-                <div class="panel-body">
-                    <div class="row filter-area">
-                        <div class="col-sm-4">
-                            <select id="talentFilter" class="form-control">
-                                <option value="nina">桃瀬にな</option>
-                                <option value="yura">碓氷ゆら</option>
-                                <option value="ren">鈴莉れん</option>
-                                <option value="hinata">菜鳥ひなた</option>
-                                <option value="ruka">紫雨るか</option>
-                            </select>
-                        </div>
+            <div id="filterArea" class="collapse in filter-area">
+                <div class="row">
+                    <div class="col-sm-3 filter-item">
+                        <label for="categoryFilter">カテゴリ</label>
+                        <select id="categoryFilter" class="form-control">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3 filter-item">
+                        <label for="genreFilter">ジャンル</label>
+                        <select id="genreFilter" class="form-control">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3 filter-item">
+                        <label for="artistFilter">アーティスト</label>
+                        <select id="artistFilter" class="form-control">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3 filter-item">
+                        <label for="typeFilter">種類</label>
+                        <select id="typeFilter" class="form-control">
+                            <option value="">すべて</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel panel-default filter-panel">
-            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#detailFilterPanel" aria-expanded="true" aria-controls="detailFilterPanel">
-                <span id="detailPanelTitle">フィルタ</span>
-                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
-            </div>
-            <div id="detailFilterPanel" class="panel-collapse collapse in">
-                <div class="panel-body">
-                    <div class="row filter-area">
-                        <div class="col-sm-4">
-                            <label>カテゴリ</label>
-                            <select id="categoryFilter" class="form-control">
-                                <option value="">すべて</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-sm-4">
-                            <label>ジャンル</label>
-                            <select id="genreFilter" class="form-control">
-                                <option value="">すべて</option>
-                            </select>
-                        </div>
-
-                        <div class="col-sm-4">
-                            <label>アーティスト</label>
-                            <select id="artistFilter" class="form-control">
-                                <option value="">すべて</option>
-                            </select>
-                        </div>
-
-                        <div class="col-sm-4">
-                            <label>種類</label>
-                            <select id="typeFilter" class="form-control">
-                                <option value="">すべて</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel panel-default filter-panel">
-            <div class="panel-heading" role="button" data-toggle="collapse" data-target="#textFilterPanel" aria-expanded="true" aria-controls="textFilterPanel">
-                <span id="textPanelTitle">キーワード</span>
-                <span class="glyphicon glyphicon-chevron-up filter-panel-icon" aria-hidden="true"></span>
-            </div>
-            <div id="textFilterPanel" class="panel-collapse collapse in">
-                <div class="panel-body">
-                    <div class="row filter-area">
-                        <div class="col-sm-4">
-                            <input type="text" id="textFilter" class="form-control" placeholder="キーワード検索">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 表示件数の切り替えとDataTablesの検索結果 -->
+        <!-- 曲数・表示件数と DataTables の検索結果 -->
         <div class="table-area">
-            <div class="page-length-controls" role="group" aria-label="1ページの表示件数">
-                <span class="page-length-label">1ページの表示件数</span>
-                <button type="button" class="btn btn-default page-length-button active" data-page-length="10" aria-pressed="true">10</button>
-                <button type="button" class="btn btn-default page-length-button" data-page-length="25" aria-pressed="false">25</button>
-                <button type="button" class="btn btn-default page-length-button" data-page-length="50" aria-pressed="false">50</button>
-                <button type="button" class="btn btn-default page-length-button" data-page-length="100" aria-pressed="false">100</button>
+            <div class="table-toolbar">
+                <p class="table-status">
+                    <span id="songCount" class="song-count"></span>
+                    <span class="copy-hint">曲を押すとコピーします</span>
+                </p>
+                <div class="page-length-controls" role="group" aria-label="1ページの表示件数">
+                    <span class="page-length-label"><span class="page-length-label-long">1ページの</span>表示件数</span>
+                    <button type="button" class="btn btn-default page-length-button active" data-page-length="10" aria-pressed="true">10</button>
+                    <button type="button" class="btn btn-default page-length-button" data-page-length="25" aria-pressed="false">25</button>
+                    <button type="button" class="btn btn-default page-length-button" data-page-length="50" aria-pressed="false">50</button>
+                    <button type="button" class="btn btn-default page-length-button" data-page-length="100" aria-pressed="false">100</button>
+                </div>
             </div>
-            <table id="grid" class="table table-striped table-bordered">
+            <div id="loadError" class="load-error" role="alert" hidden>
+                <p>データを読み込めませんでした。</p>
+                <button type="button" id="retryButton" class="btn btn-default">再読み込み</button>
+            </div>
+            <table id="grid" class="table">
                 <thead>
                     <tr>
                         <th>楽曲</th>
