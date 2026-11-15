@@ -92,4 +92,3 @@ GAS(`gas/`)の変更は、このデプロイでは公開されません。`npm r
 
 - Create: [@o2i_5](https://x.com/o2i_5)
 - Data: [@Shigure_1764](https://x.com/Shigure_1764)
-- Setlist: 配信のコメント欄から(集計: [配信カレンダー](https://mnkm.page/prnb-stream-calendar/))
