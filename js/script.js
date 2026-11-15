@@ -745,7 +745,7 @@ $(function () {
         updateHistoryStatus();
     }
 
-    // 表の上の「歌枠での記録」の説明と、メニューの CSV のボタン
+    // 表の上の「歌枠での記録」の説明
     function updateHistoryStatus() {
         const status = currentHistory.status;
         const matched = currentHistory.matched;
@@ -762,7 +762,6 @@ $(function () {
             text = '歌枠での記録を読み込み中です';
         }
         $('#historyStatus').text(text).toggleClass('is-error', status === 'error');
-        $('#historyCsvButton').prop('disabled', !(status === 'ok' && matched));
     }
 
     // 歌った配信の一覧を出す
@@ -825,26 +824,6 @@ $(function () {
     });
     $('#historyDialogClose').on('click', function () {
         document.getElementById('historyDialog').close();
-    });
-
-    // シートの更新に使う CSV を保存する
-    $('#historyCsvButton').on('click', function () {
-        if (currentHistory.status !== 'ok' || !currentHistory.matched) {
-            return;
-        }
-        const csv = SongHistory.buildCsv(currentHistory.rows, currentHistory.matched);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const today = SongHistory.formatDate(Date.now()).replace(/\//g, '');
-        link.href = url;
-        link.download = `prnb-songlist-${currentTalent}-${today}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(function () {
-            URL.revokeObjectURL(url);
-        }, 1000);
     });
 
     // 並び順の欄。列の見出しで並べ替えたときは、合う選択肢に合わせる(合わなければ「—」)

@@ -1013,10 +1013,6 @@ table.dataTable tbody td.dataTables_empty {
   white-space: nowrap;
 }
 
-.history-csv-button {
-  margin-top: 4px;
-}
-
 .history-dialog {
   width: min(560px, calc(100vw - 32px));
   max-height: calc(100vh - 64px);
@@ -1085,7 +1081,7 @@ table.dataTable tbody td.dataTables_empty {
 }
 
 @media (max-width: 767px) {
-  /* 狭い画面では表を広く使うため、集計の期間はメニューの説明に任せ、読めなかったときだけ出す */
+  /* 狭い画面では表を広く使うため、集計の期間は出さず、読めなかったときだけ出す */
   .history-status:not(.is-error) {
     display: none;
   }

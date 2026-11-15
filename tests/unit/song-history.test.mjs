@@ -149,23 +149,3 @@ test('シートの最終歌唱日と歌枠での記録の、新しいほうを�
     assert.equal(H.parseSheetDate('2026/02/30'), null);
     assert.equal(H.formatDate(H.parseSheetDate('2026-1-31')), '2026/01/31');
 });
-
-test('CSV は式として読まれる値を無害にし、記録とシートに無い曲を新しい順に並べる', () => {
-    const rows = [{ title: '=HYPERLINK("x")', artist: 'A', lastSung: '2026/01/01' }, { title: 'Song', artist: 'B, C', lastSung: '' }];
-    const matched = H.matchHistory(rows, response([
-        { title: '=HYPERLINK("x")', performances: [{ videoId: VID(1), time: 30 }] },
-        { title: 'Song', performances: [{ videoId: VID(2), time: null }] },
-        { title: '-ERROR', artist: '@x', performances: [{ videoId: VID(3), time: 1 }] }
-    ], {
-        [VID(1)]: { title: 'a', eventAt: '2026-03-01T12:00:00Z' },
-        [VID(2)]: { title: 'b', eventAt: '2026-02-01T12:00:00Z' },
-        [VID(3)]: { title: 'c', eventAt: '2026-04-01T12:00:00Z' }
-    }));
-    const csv = H.buildCsv(rows, matched);
-    assert.ok(csv.startsWith('﻿状態,楽曲,'));
-    const lines = csv.slice(1).trim().split('\r\n');
-    assert.equal(lines.length, 4);
-    assert.equal(lines[1], `シートに無い,'-ERROR,'@x,1,2026/04/01,,,https://www.youtube.com/watch?v=${VID(3)}&t=1s,'-ERROR,`);
-    assert.equal(lines[2], `シートにある,"'=HYPERLINK(""x"")",A,1,2026/03/01,2026/01/01,○,https://www.youtube.com/watch?v=${VID(1)}&t=30s,"'=HYPERLINK(""x"")",`);
-    assert.equal(lines[3], `シートにある,Song,"B, C",1,2026/02/01,,○,https://www.youtube.com/watch?v=${VID(2)},Song,`);
-});

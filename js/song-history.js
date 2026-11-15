@@ -258,72 +258,7 @@
         return result;
     }
 
-    // 表計算ソフトで式として読まれないよう、= + - @ などで始まる値の前に ' を付ける
-    function csvCell(value) {
-        let text = value == null ? '' : String(value);
-        if (/^[=+\-@\t\r]/.test(text)) {
-            text = `'${text}`;
-        }
-        return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    }
-
-    /**
-     * シートの更新に使う CSV。記録のある曲と、シートに無い曲を、最後に歌った歌枠の新しい順に並べる。
-     * Excel で文字化けしないよう、先頭に BOM を付け、改行は CRLF にする
-     */
-    function buildCsv(rows, matched) {
-        const header = ['状態', '楽曲', 'アーティスト', '歌枠での記録', '最後に歌った歌枠', 'シートの最終歌唱日', 'シートより新しい', '最後の配信', 'セトリでの曲名', '区別できなかった回'];
-        const lines = [];
-        rows.forEach((row, index) => {
-            const record = matched.records[index];
-            if (!record) {
-                return;
-            }
-            const last = record.performances[0];
-            const sheetAt = parseSheetDate(row.lastSung);
-            const newer = record.lastAt != null && (sheetAt == null || formatDate(record.lastAt) > formatDate(sheetAt));
-            lines.push({
-                lastAt: record.lastAt,
-                count: record.count,
-                cells: [
-                    'シートにある',
-                    row.title,
-                    row.artist,
-                    record.count,
-                    formatDate(record.lastAt),
-                    row.lastSung || '',
-                    newer ? '○' : '',
-                    last ? youtubeUrl(last.videoId, last.time) : '',
-                    record.setlistTitles.join(' / '),
-                    record.ambiguous || ''
-                ]
-            });
-        });
-        matched.unmatched.forEach(song => {
-            const last = song.performances[0];
-            lines.push({
-                lastAt: song.lastAt,
-                count: song.count,
-                cells: [
-                    'シートに無い',
-                    song.title,
-                    song.artist || '',
-                    song.count,
-                    formatDate(song.lastAt),
-                    '',
-                    '',
-                    last ? youtubeUrl(last.videoId, last.time) : '',
-                    song.title,
-                    ''
-                ]
-            });
-        });
-        lines.sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0) || b.count - a.count);
-        const body = [header].concat(lines.map(line => line.cells)).map(cells => cells.map(csvCell).join(','));
-        return '﻿' + body.join('\r\n') + '\r\n';
-    }
-
-    const api = { songKey, looseKey, sameArtist, matchHistory, buildCsv, csvCell, formatDate, formatDateTime, youtubeUrl, parseSheetDate, latestSung };
+    const api = { songKey, looseKey, sameArtist, matchHistory, formatDate, formatDateTime, youtubeUrl, parseSheetDate, latestSung };
     if (typeof module === 'object' && module.exports) {
         module.exports = api;
     } else {

@@ -572,7 +572,6 @@ test.describe('歌枠での記録', () => {
             expect(await cells(page, 'count')).toEqual(['', '', '', '']);
             // シートの日付だけは出す
             expect(await cells(page, 'last')).toEqual(['', '2026/12/01シート', '2026/10/01シート', '']);
-            await expect(page.locator('#historyCsvButton')).toBeDisabled();
         });
     }
 
@@ -641,23 +640,6 @@ test.describe('歌枠での記録', () => {
         await openPage(page);
         await expect(page.locator('#loadError')).toBeVisible();
         await expect(page.locator('#historyStatus')).toHaveText('');
-    });
-
-    test('メニューから、シートの更新に使う CSV を保存できる', async ({ page }) => {
-        await openWithHistory(page);
-        await page.locator('#menuButton').click();
-        const [download] = await Promise.all([
-            page.waitForEvent('download'),
-            page.locator('#historyCsvButton').click()
-        ]);
-        expect(download.suggestedFilename()).toMatch(/^prnb-songlist-nina-\d{8}\.csv$/);
-        const text = await (await download.createReadStream()).toArray().then(chunks => Buffer.concat(chunks).toString('utf8'));
-        const lines = text.replace(/^\uFEFF/, '').trim().split('\r\n');
-        expect(lines[0]).toBe('状態,楽曲,アーティスト,歌枠での記録,最後に歌った歌枠,シートの最終歌唱日,シートより新しい,最後の配信,セトリでの曲名,区別できなかった回');
-        expect(lines).toContain('シートにある,青い空,アーティストA,3,2026/11/11,,○,https://www.youtube.com/watch?v=video000003&t=754s,青い 空,');
-        expect(lines).toContain('シートにある,黄色い花,アーティストB,1,2026/01/01,2026/12/01,,https://www.youtube.com/watch?v=video000001&t=30s,黄色い花,');
-        // セトリ由来の文字は、表計算ソフトで式にならないようにする
-        expect(lines).toContain("シートに無い,<b>知らない曲</b>,'=cmd,1,2026/01/01,,,https://www.youtube.com/watch?v=video000001&t=90s,<b>知らない曲</b>,");
     });
 
     test.describe('スマートフォンの幅', () => {
