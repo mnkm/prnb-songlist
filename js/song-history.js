@@ -14,6 +14,8 @@
     const BRACKETS = /\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］|【[^【】]*】|「[^「」]*」|『[^『』]*』/g;
     // 「feat.」「ft.」から後ろ
     const FEAT = /\s*(?:\bfeat\b|\bft\b)\.?.*$/i;
+    // 曲名の末尾の「～…～」「〜…〜」「-…-」で囲んだサブタイトル(途中のものは曲名の一部のことがあるので外さない)
+    const TRAILING_SUBTITLE = /\s*(?:[~〜][^~〜]+[~〜]|-[^-]+-)\s*$/;
     const JST_OFFSET = 9 * 60 * 60 * 1000;
 
     function normalize(text) {
@@ -38,12 +40,13 @@
             }
             stripped = next;
         }
-        stripped = stripped.replace(FEAT, '');
+        stripped = stripped.replace(FEAT, '').replace(TRAILING_SUBTITLE, '');
         return stripped.replace(SPACE_PUNCT_SYMBOL, '');
     }
 
+    // アーティストのキー。「(CV:…)」などの括弧の中は、書く人によって有無が違うので外す
     function artistKey(artist) {
-        return normalize(artist).replace(SPACE_PUNCT_SYMBOL, '');
+        return normalize(artist).replace(BRACKETS, '').replace(SPACE_PUNCT_SYMBOL, '');
     }
 
     // アーティストが同じとみなせるか。書き方が揺れる(「(CV:…)」の有無など)ので、片方がもう片方を含めば同じとする
@@ -221,10 +224,15 @@
             performances.forEach(p => {
                 let target = candidates.length === 1 ? candidates[0] : null;
                 if (target == null) {
-                    // 同名の曲がシートに複数あるときは、その回のアーティストで選ぶ。決まらなければ数に入れない
+                    // 同名の曲がシートに複数あるときは、その回のアーティストで選ぶ。
+                    // 決まらなければ、曲名の書き方まで同じ行が 1 つだけならそれにし(「Watch Me」と「Watch me!」など)、
+                    // それでも決まらなければ数に入れない
                     const hits = candidates.filter(index => sameArtist(rows[index].artist, p.artist));
+                    const exact = candidates.filter(index => normalize(rows[index].title) === normalize(song.title));
                     if (hits.length === 1) {
                         target = hits[0];
+                    } else if (hits.length === 0 && exact.length === 1) {
+                        target = exact[0];
                     }
                 }
                 if (target == null) {

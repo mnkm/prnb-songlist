@@ -115,7 +115,8 @@ test('最終歌唱日は、日付のセルを日本時間の「yyyy/MM/dd」に�
                 ['青い空', new Date('2026-01-30T15:00:00Z')],
                 ['白い雲', ' 2025/12/24 '],
                 ['黄色い花', ''],
-                ['赤い実', new Date('invalid')]
+                ['赤い実', new Date('invalid')],
+                ['緑の葉', 20260101]
             ]
         }
     });
@@ -125,7 +126,8 @@ test('最終歌唱日は、日付のセルを日本時間の「yyyy/MM/dd」に�
             { title: '青い空', lastSung: '2026/01/31' },
             { title: '白い雲', lastSung: '2025/12/24' },
             { title: '黄色い花', lastSung: '' },
-            { title: '赤い実', lastSung: '' }
+            { title: '赤い実', lastSung: '' },
+            { title: '緑の葉', lastSung: '20260101' }
         ]
     });
 });

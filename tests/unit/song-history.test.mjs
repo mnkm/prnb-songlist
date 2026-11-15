@@ -28,6 +28,11 @@ test('規則 2 は括弧の中と feat. 以降を外し、何も残らなけれ�
     assert.equal(H.looseKey('「君と僕の歌」'), '');
     // 曲名の途中のハイフンは外さない
     assert.equal(H.looseKey('CHA-LA HEAD-CHA-LA'), 'chalaheadchala');
+    // 末尾の「～…～」「〜…〜」「-…-」は外す
+    assert.equal(H.looseKey('貴方解剖純愛歌 ～シね～'), '貴方解剖純愛歌');
+    assert.equal(H.looseKey('貴方解剖純愛歌 〜死ね〜'), '貴方解剖純愛歌');
+    assert.equal(H.looseKey('Let It Go～ありのままで～'), 'letitgo');
+    assert.equal(H.looseKey('二息歩行-Piano Ver.-'), '二息歩行');
 });
 
 test('規則 1、無ければ規則 2 で突き合わせ、残りはシートに無い曲にする', () => {
@@ -84,6 +89,28 @@ test('同名の曲がシートに複数あるときは、回のアーティス�
     assert.equal(result.records[1].count, 1);
     assert.equal(result.records[0].ambiguous, 2);
     assert.equal(result.records[1].ambiguous, 2);
+});
+
+test('アーティストは括弧の中を除き、片方がもう片方を含めば同じとする', () => {
+    assert.equal(H.sameArtist('天乃リリサ(CV:前田佳織里)・橘美花莉(CV:鬼頭明里)', '天乃リリサ・橘 美花莉'), true);
+    assert.equal(H.sameArtist('HoneyWorks feat. 成海聖奈', 'HoneyWorks'), true);
+    assert.equal(H.sameArtist('美波', 'Mrs. GREEN APPLE'), false);
+    assert.equal(H.sameArtist('A', null), false);
+});
+
+test('アーティストで決まらない回は、曲名の書き方まで同じ行が 1 つだけならそれにする', () => {
+    const rows = [{ title: 'Watch Me', artist: 'X' }, { title: 'Watch me!', artist: 'Y' }];
+    const result = H.matchHistory(rows, response([
+        { title: 'Watch me!', performances: [{ videoId: VID(1), time: 1 }] },
+        { title: 'WATCH ME', performances: [{ videoId: VID(2), time: 1 }] },
+        { title: 'Watch-Me', performances: [{ videoId: VID(3), time: 1 }] }
+    ]));
+    // 大文字と小文字の違いは同じ書き方とみなす
+    assert.equal(result.records[0].count, 1);
+    assert.equal(result.records[1].count, 1);
+    // 書き方が両方と違う回(Watch-Me)は数えない
+    assert.equal(result.records[0].ambiguous, 1);
+    assert.equal(result.records[1].ambiguous, 1);
 });
 
 test('形の違う値は使わない', () => {

@@ -6,7 +6,9 @@ $(function () {
     // 歌枠での記録(配信カレンダーの API、同じオリジン)。読めなくても一覧は出すので、待つ時間は短くする
     const HISTORY_ENDPOINT = '/prnb-stream-calendar/api/song-history';
     const HISTORY_TIMEOUT = 8000;
-    const History = window.SongHistory;
+    // 楽曲が届いたあと、記録を待つ時間。過ぎたら一覧を先に出し、記録は届いたときに足す
+    const HISTORY_WAIT = 1500;
+    const SongHistory = window.SongHistory;
 
     // タレントの色。soft は背景の塗り、strong は枠線・下線・選択中の印に使う(白地・黒地で読める濃さ)
     const TALENT_COLORS = {
@@ -523,11 +525,11 @@ $(function () {
         if (record) {
             const parts = [record.count ? `歌枠 ${record.count} 回` : '歌枠の記録: 同名の曲と区別できません'];
             if (latest) {
-                parts.push(`最後 ${History.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
+                parts.push(`最後 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
             }
             history = `<span class="song-sub song-sub-history">${historyButton(row, parts.join('・'))}</span>`;
         } else if (latest) {
-            history = `<span class="song-sub song-sub-history">最後に歌った日 ${escapeText(History.formatDate(latest.at))}(シート)</span>`;
+            history = `<span class="song-sub song-sub-history">最後に歌った日 ${escapeText(SongHistory.formatDate(latest.at))}(シート)</span>`;
         }
         return title + sub + history;
     }
@@ -536,8 +538,10 @@ $(function () {
     const COLUMN_COUNT = 7;
     const COLUMN_LAST = 8;
 
+    // 回数のボタン。読み上げでは、どの曲のボタンか分かるよう曲名を付ける
     function historyButton(row, label) {
-        return `<button type="button" class="history-button" data-row="${row.rowIndex}">${escapeText(label)}</button>`;
+        const ariaLabel = `${row.title}の歌枠での記録を開く(${label})`;
+        return `<button type="button" class="history-button" data-row="${row.rowIndex}" aria-label="${escapeText(ariaLabel)}">${escapeText(label)}</button>`;
     }
 
     function renderCount(data, type, row) {
@@ -563,7 +567,7 @@ $(function () {
         if (!latest) {
             return '';
         }
-        const date = History.formatDate(latest.at);
+        const date = SongHistory.formatDate(latest.at);
         if (type !== 'display') {
             return date;
         }
@@ -711,29 +715,32 @@ $(function () {
         rows.forEach(function (row, index) {
             row.rowIndex = index;
             row.history = null;
+            row.latest = null;
         });
         const setLatest = function () {
             rows.forEach(function (row) {
-                row.latest = History.latestSung(row.lastSung, row.history);
+                row.latest = SongHistory.latestSung(row.lastSung, row.history);
             });
         };
         let matched = null;
         let status = history.status;
-        if (status === 'ok') {
-            try {
-                matched = History.matchHistory(rows, history.data);
+        try {
+            if (status === 'ok') {
+                matched = SongHistory.matchHistory(rows, history.data);
                 matched.records.forEach(function (record, index) {
                     rows[index].history = record;
                 });
-            } catch (error) {
-                status = 'error';
-                matched = null;
-                rows.forEach(function (row) {
-                    row.history = null;
-                });
             }
+            setLatest();
+        } catch (error) {
+            console.error('歌枠での記録を突き合わせられませんでした', error);
+            status = 'error';
+            matched = null;
+            rows.forEach(function (row) {
+                row.history = null;
+                row.latest = null;
+            });
         }
-        setLatest();
         currentHistory = { status: status, matched: matched, rows: rows };
         updateHistoryStatus();
     }
@@ -744,20 +751,18 @@ $(function () {
         const matched = currentHistory.matched;
         let text = '';
         if (status === 'ok' && matched) {
-            const since = History.formatDate(matched.since);
-            const updated = History.formatDateTime(matched.updatedAt);
+            const since = SongHistory.formatDate(matched.since);
+            const updated = SongHistory.formatDateTime(matched.updatedAt);
             text = `歌枠での記録: ${since} 以降の YouTube の歌枠から${updated ? `(${updated} 時点)` : ''}`;
         } else if (status === 'empty') {
             text = '歌枠での記録: まだありません';
         } else if (status === 'error') {
             text = '歌枠での記録を読み込めませんでした';
+        } else if (status === 'loading' && currentHistory.rows.length) {
+            text = '歌枠での記録を読み込み中です';
         }
         $('#historyStatus').text(text).toggleClass('is-error', status === 'error');
         $('#historyCsvButton').prop('disabled', !(status === 'ok' && matched));
-    }
-
-    function talentName(talent) {
-        return $(`.talent-button[data-talent="${talent}"] .talent-name-full`).text() || talent;
     }
 
     // 歌った配信の一覧を出す
@@ -768,29 +773,49 @@ $(function () {
             return;
         }
         $('#historyDialogTitle').text(row.title);
-        const sheetDate = History.parseSheetDate(row.lastSung);
+        const sheetDate = SongHistory.parseSheetDate(row.lastSung);
         $('#historyDialogSummary').text(record.count
-            ? `歌枠での記録 ${record.count} 回・最後に歌った歌枠 ${History.formatDate(record.lastAt)}`
+            ? `歌枠での記録 ${record.count} 回・最後に歌った歌枠 ${SongHistory.formatDate(record.lastAt)}`
             : '歌枠での記録はありますが、同名の曲と区別できないため数えていません。');
         $('#historyDialogSheet')
-            .text(sheetDate != null ? `シートの最終歌唱日: ${History.formatDate(sheetDate)}` : '')
+            .text(sheetDate != null ? `シートの最終歌唱日: ${SongHistory.formatDate(sheetDate)}` : '')
             .prop('hidden', sheetDate == null);
         $('#historyDialogAmbiguous')
             .text(record.ambiguous ? `ほかに、同名の曲と区別できなかった回が ${record.ambiguous} 回あります(数に入れていません)。` : '')
             .prop('hidden', !record.ambiguous);
         const $list = $('#historyDialogList').empty();
         record.performances.forEach(function (performance) {
-            const href = History.youtubeUrl(performance.videoId, performance.time);
+            const href = SongHistory.youtubeUrl(performance.videoId, performance.time);
             if (!href) {
                 return;
             }
             const $link = $('<a>', { href: href, target: '_blank', rel: 'noopener noreferrer' })
                 .text(performance.streamTitle || performance.videoId);
-            const $date = $('<span>', { class: 'history-date' }).text(History.formatDate(performance.at));
+            const $date = $('<span>', { class: 'history-date' }).text(SongHistory.formatDate(performance.at));
             $list.append($('<li>').append($date, $link));
         });
+        dialogOpener = document.activeElement;
         dialog.showModal();
     }
+
+    // 閉じたら、開いたボタンにフォーカスを戻す(幅の切り替えなどで描き直されていたら、同じ行のボタンに)
+    let dialogOpener = null;
+    $('#historyDialog').on('close', function () {
+        let target = dialogOpener;
+        if (target && !document.body.contains(target)) {
+            target = document.querySelector(`#grid .history-button[data-row="${$(target).data('row')}"]`);
+        }
+        if (target) {
+            target.focus();
+        }
+        dialogOpener = null;
+    });
+    // 背景(dialog の外側)を押したら閉じる
+    $('#historyDialog').on('click', function (event) {
+        if (event.target === this) {
+            this.close();
+        }
+    });
 
     $('#grid').on('click', '.history-button', function () {
         const row = currentHistory.rows[Number($(this).data('row'))];
@@ -807,11 +832,11 @@ $(function () {
         if (currentHistory.status !== 'ok' || !currentHistory.matched) {
             return;
         }
-        const csv = History.buildCsv(currentHistory.rows, currentHistory.matched);
+        const csv = SongHistory.buildCsv(currentHistory.rows, currentHistory.matched);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const today = History.formatDate(Date.now()).replace(/\//g, '');
+        const today = SongHistory.formatDate(Date.now()).replace(/\//g, '');
         link.href = url;
         link.download = `prnb-songlist-${currentTalent}-${today}.csv`;
         document.body.appendChild(link);
@@ -868,12 +893,22 @@ $(function () {
         };
 
         // 楽曲と歌枠での記録の両方がそろってから 1 回だけ描く(あとから行の高さや並びが変わらないように)
+        // 記録が HISTORY_WAIT までに届かなければ、一覧を先に出し、記録は届いたときに足す
         const songsRequest = Promise.resolve(
             $.ajax({ url: GAS_ENDPOINT, data: { talent: talent }, dataType: 'json', timeout: LOAD_TIMEOUT })
         );
+        let historyArrived = false;
+        historyRequest.then(function () {
+            historyArrived = true;
+        });
         songsRequest
             .then(function (res) {
-                return historyRequest.then(function (history) {
+                const waitLimit = new Promise(function (resolve) {
+                    setTimeout(function () {
+                        resolve({ status: 'loading' });
+                    }, HISTORY_WAIT);
+                });
+                return Promise.race([historyRequest, waitLimit]).then(function (history) {
                     return { res: res, history: history };
                 });
             })
@@ -891,6 +926,17 @@ $(function () {
 
                 const rows = normalizeRows(res.rows);
                 attachHistory(rows, result.history);
+                if (result.history.status === 'loading' && !historyArrived) {
+                    historyRequest.then(function (history) {
+                        if (seq !== loadSeq || $('.table-area').hasClass('has-error')) {
+                            return;
+                        }
+                        attachHistory(rows, history);
+                        table.rows().invalidate('data');
+                        table.draw(false);
+                        updateTableHeight();
+                    });
+                }
                 const wasError = $('.table-area').hasClass('has-error');
                 hasLoaded = true;
                 showLoadError(false);
@@ -916,8 +962,12 @@ $(function () {
                     $('.talent-button[aria-pressed="true"]').trigger('focus');
                 }
             })
-            .catch(function () {
+            .catch(function (error) {
                 if (seq === loadSeq) {
+                    // 描画のコードの例外もここに来るので、原因を console に残す
+                    if (error instanceof Error) {
+                        console.error(error);
+                    }
                     failed();
                 }
             })

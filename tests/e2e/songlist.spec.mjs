@@ -591,6 +591,50 @@ test.describe('歌枠での記録', () => {
         expect(await cells(page, 'count')).toEqual(['3 回', '1 回', '', '1 回']);
     });
 
+    test('記録が遅いときは一覧を先に出し、届いたら記録を足す', async ({ page }) => {
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await openWithHistory(page, async talent => {
+            await gate;
+            return HISTORY[talent];
+        });
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録を読み込み中です');
+        expect(await cells(page, 'count')).toEqual(['', '', '', '']);
+        release();
+        await expect(page.locator('#grid tbody tr td.history-count')).toHaveText(['3 回', '1 回', '', '1 回']);
+        await expect(page.locator('#historyStatus')).toHaveText(/^歌枠での記録: 2026\/01\/01 以降/);
+    });
+
+    test('記録を待つあいだに切り替えたら、前のタレントの記録は足さない', async ({ page }) => {
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await openWithHistory(page, async talent => {
+            if (talent === 'nina') {
+                await gate;
+            }
+            return HISTORY[talent] || { songs: [], streams: {}, updatedAt: '2026-11-15T03:00:00Z' };
+        });
+        await selectTalent(page, 'ren');
+        release();
+        await page.waitForTimeout(300);
+        expect(await visibleTitles(page)).toEqual(['赤い実', '緑の葉']);
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録: まだありません');
+    });
+
+    test('一覧を閉じるとボタンにフォーカスを戻し、背景を押しても閉じる', async ({ page }) => {
+        await openWithHistory(page);
+        const button = page.locator('#grid tbody tr').first().locator('.history-button');
+        await expect(button).toHaveAttribute('aria-label', '青い空の歌枠での記録を開く(3 回)');
+        await button.click();
+        await page.locator('#historyDialogClose').click();
+        await expect(button).toBeFocused();
+        await button.click();
+        await expect(page.locator('#historyDialog')).toBeVisible();
+        await page.mouse.click(5, 5);
+        await expect(page.locator('#historyDialog')).toBeHidden();
+    });
+
     test('楽曲の読み込みに失敗したときは、記録が読めても失敗を知らせる', async ({ page }) => {
         await mockGas(page, () => ({ error: 'internal_error' }));
         await mockHistory(page, talent => HISTORY[talent]);
