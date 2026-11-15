@@ -26,3 +26,40 @@ export function manySongs(count) {
         return { reading: `きょく${n}`, title: `曲${n}`, artist: `アーティスト${n}`, category: 'J-POP', genre: '', type: '' };
     });
 }
+
+// 歌枠での記録(/api/song-history)の代わり。桃瀬になの曲(上の SONGS.nina)に合わせている
+const vid = n => `video${String(n).padStart(6, '0')}`;
+export const HISTORY_SONGS = {
+    nina: [
+        { reading: 'あおいそら', title: '青い空', artist: 'アーティストA', category: 'J-POP', genre: 'バラード', type: '', lastSung: '' },
+        { reading: 'きいろいはな', title: '黄色い花', artist: 'アーティストB', category: 'アニソン', genre: 'ロック', type: '', lastSung: '2026/12/01' },
+        { reading: 'しろいくも', title: '白い雲', artist: 'アーティストA', category: 'J-POP', genre: 'ロック', type: '', lastSung: '2026/10/01' },
+        { reading: 'ほしのうた', title: 'Star Song', artist: 'アーティストC', category: 'ボカロ', genre: 'バラード', type: '', lastSung: '' }
+    ]
+};
+export const HISTORY = {
+    nina: {
+        songs: [
+            { title: '青い 空', artist: 'アーティストA', key: '青い空', count: 3, lastAt: '2026-11-10T12:00:00Z', performances: [
+                { videoId: vid(3), time: 754, artist: 'アーティストA' },
+                { videoId: vid(2), time: null, artist: null },
+                { videoId: vid(1), time: 0, artist: null }
+            ] },
+            { title: 'Star Song (Acoustic)', artist: null, key: 'starsongacoustic', count: 1, lastAt: '2026-11-01T12:00:00Z', performances: [
+                { videoId: vid(2), time: 60, artist: null }
+            ] },
+            { title: '黄色い花', artist: 'アーティストB', key: '黄色い花', count: 1, lastAt: '2026-01-01T12:00:00Z', performances: [
+                { videoId: vid(1), time: 30, artist: 'アーティストB' }
+            ] },
+            { title: '<b>知らない曲</b>', artist: '=cmd', key: 'b知らない曲b', count: 1, lastAt: '2026-01-01T12:00:00Z', performances: [
+                { videoId: vid(1), time: 90, artist: '=cmd' }
+            ] }
+        ],
+        streams: {
+            [vid(1)]: { title: '歌枠 その1', eventAt: '2026-01-01T12:00:00Z' },
+            [vid(2)]: { title: '歌枠 その2', eventAt: '2026-11-01T12:00:00Z' },
+            [vid(3)]: { title: '<i>歌枠 その3</i>', eventAt: '2026-11-10T15:30:00Z' }
+        },
+        updatedAt: '2026-11-15T03:00:00Z'
+    }
+};

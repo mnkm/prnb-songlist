@@ -946,3 +946,147 @@ table.dataTable tbody td.dataTables_empty {
     margin-top: 8px;
   }
 }
+
+/* 歌枠での記録 */
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-control label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-text-color);
+  white-space: nowrap;
+}
+
+.sort-control select {
+  width: auto;
+  background-color: var(--input-background);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.history-status {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-text-color);
+}
+
+.history-status:empty {
+  display: none;
+}
+
+.history-status.is-error {
+  color: var(--heading-text-color);
+}
+
+.history-button {
+  padding: 0 8px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.history-button:hover {
+  background: var(--accent-color);
+}
+
+.history-source {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted-text-color);
+}
+
+#grid td.history-count,
+#grid td.history-last {
+  white-space: nowrap;
+}
+
+.history-csv-button {
+  margin-top: 4px;
+}
+
+.history-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-background);
+  color: var(--text-color);
+}
+
+.history-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.history-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-dialog-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--heading-text-color);
+  overflow-wrap: anywhere;
+}
+
+.history-dialog-summary {
+  margin-bottom: 8px;
+}
+
+.history-dialog-note {
+  font-size: 12px;
+  color: var(--muted-text-color);
+}
+
+.history-dialog-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.history-dialog-list li {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.history-dialog-list a {
+  min-width: 0;
+  color: var(--link-color);
+  overflow-wrap: anywhere;
+}
+
+.history-date {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--muted-text-color);
+}
+
+.song-sub-history {
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  /* 狭い画面では表を広く使うため、集計の期間はメニューの説明に任せ、読めなかったときだけ出す */
+  .history-status:not(.is-error) {
+    display: none;
+  }
+}

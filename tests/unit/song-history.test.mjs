@@ -1,0 +1,144 @@
+// 歌枠での記録の突き合わせ(js/song-history.js)のテスト
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const H = require('../../js/song-history.js');
+
+const VID = n => `video${String(n).padStart(6, '0')}`; // 11 文字の動画の ID
+
+function response(songs, streams = {}) {
+    return { songs, streams, updatedAt: '2026-11-15T03:00:00Z' };
+}
+
+test('曲名のキーは配信カレンダーの songKey と同じ規則でそろえる(docs/details.md の例)', () => {
+    assert.equal(H.songKey('ＬＥＭＯＮ！'), 'lemon');
+    assert.equal(H.songKey('夜に 駆ける'), '夜に駆ける');
+    assert.equal(H.songKey('Lemon (Acoustic ver.)'), 'lemonacousticver');
+    // 記号だけの曲名は、記号を残す
+    assert.equal(H.songKey('!!!'), '!!!');
+    // 見えない文字(U+200E)は除く
+    assert.equal(H.songKey('‎ブラック★ロックシューター'), H.songKey('ブラック★ロックシューター'));
+});
+
+test('規則 2 は括弧の中と feat. 以降を外し、何も残らなければ空にする', () => {
+    assert.equal(H.looseKey('勇者 (Yuusha)'), '勇者');
+    assert.equal(H.looseKey('おじゃま虫 feat. 初音ミク'), 'おじゃま虫');
+    assert.equal(H.looseKey('「君と僕の歌」'), '');
+    // 曲名の途中のハイフンは外さない
+    assert.equal(H.looseKey('CHA-LA HEAD-CHA-LA'), 'chalaheadchala');
+});
+
+test('規則 1、無ければ規則 2 で突き合わせ、残りはシートに無い曲にする', () => {
+    const rows = [{ title: '青い空', artist: 'A' }, { title: '勇者', artist: 'B' }];
+    const result = H.matchHistory(rows, response([
+        { title: '青い 空', performances: [{ videoId: VID(1), time: 10 }] },
+        { title: '勇者 (Yuusha)', performances: [{ videoId: VID(2), time: null }] },
+        { title: '知らない曲', artist: 'Z', performances: [{ videoId: VID(3), time: 5 }, { videoId: VID(4), time: 6 }] }
+    ], {
+        [VID(1)]: { title: '歌枠1', eventAt: '2026-11-01T12:00:00Z' },
+        [VID(2)]: { title: '歌枠2', eventAt: '2026-10-01T12:00:00Z' },
+        [VID(3)]: { title: '歌枠3', eventAt: '2026-09-01T12:00:00Z' },
+        [VID(4)]: { title: '歌枠4', eventAt: '2026-09-02T12:00:00Z' }
+    }));
+    assert.equal(result.records[0].count, 1);
+    assert.equal(result.records[0].performances[0].streamTitle, '歌枠1');
+    assert.equal(result.records[1].count, 1);
+    assert.equal(result.unmatched.length, 1);
+    assert.equal(result.unmatched[0].count, 2);
+    assert.equal(H.formatDate(result.since), '2026/09/01');
+});
+
+test('書き方違いで 1 行に当たる曲は合算し、同じ配信で 2 回歌った回も数える', () => {
+    const rows = [{ title: 'Song', artist: 'A' }];
+    const streams = {
+        [VID(1)]: { title: 'x', eventAt: '2026-01-01T12:00:00Z' },
+        [VID(2)]: { title: 'y', eventAt: '2026-02-01T12:00:00Z' }
+    };
+    const result = H.matchHistory(rows, response([
+        { title: 'Song', performances: [{ videoId: VID(1), time: 1 }, { videoId: VID(1), time: 300 }] },
+        { title: 'Song (short ver.)', performances: [{ videoId: VID(2), time: 2 }] }
+    ], streams));
+    const record = result.records[0];
+    assert.equal(record.count, 3);
+    assert.equal(H.formatDate(record.lastAt), '2026/02/01');
+    assert.equal(record.performances[0].videoId, VID(2));
+    assert.deepEqual(record.setlistTitles, ['Song', 'Song (short ver.)']);
+});
+
+test('同名の曲がシートに複数あるときは、回のアーティストで選び、決まらない回は数えない', () => {
+    const rows = [{ title: 'スパークル', artist: '幾田りら' }, { title: 'スパークル', artist: 'RADWIMPS' }];
+    const result = H.matchHistory(rows, response([{
+        title: 'スパークル',
+        artist: '幾田りら',
+        performances: [
+            { videoId: VID(1), time: 1, artist: '幾田りら' },
+            { videoId: VID(2), time: 1, artist: 'RADWIMPS(野田洋次郎)' },
+            { videoId: VID(3), time: 1, artist: null },
+            // カレンダー側の修正の前の応答には artist が無い
+            { videoId: VID(4), time: 1 }
+        ]
+    }]));
+    assert.equal(result.records[0].count, 1);
+    assert.equal(result.records[1].count, 1);
+    assert.equal(result.records[0].ambiguous, 2);
+    assert.equal(result.records[1].ambiguous, 2);
+});
+
+test('形の違う値は使わない', () => {
+    const rows = [{ title: 'Song', artist: 'A' }];
+    const result = H.matchHistory(rows, response([
+        { title: 'Song', performances: [{ videoId: '"><script>', time: 1 }, { videoId: VID(1), time: -3 }, { videoId: VID(2), time: 1.5 }] },
+        null,
+        { title: 1, performances: [] }
+    ]));
+    assert.equal(result.records[0].count, 2);
+    assert.deepEqual(result.records[0].performances.map(p => p.time), [null, null]);
+    assert.deepEqual(H.matchHistory(rows, { songs: 'x' }).records, [null]);
+    assert.deepEqual(H.matchHistory(rows, null).records, [null]);
+});
+
+test('YouTube の URL は time が正の整数のときだけ位置を付け、ID の形を確かめる', () => {
+    assert.equal(H.youtubeUrl(VID(1), 125), `https://www.youtube.com/watch?v=${VID(1)}&t=125s`);
+    assert.equal(H.youtubeUrl(VID(1), 0), `https://www.youtube.com/watch?v=${VID(1)}`);
+    assert.equal(H.youtubeUrl(VID(1), null), `https://www.youtube.com/watch?v=${VID(1)}`);
+    assert.equal(H.youtubeUrl('bad', 1), null);
+});
+
+test('日付は日本時間で出す', () => {
+    assert.equal(H.formatDate(Date.parse('2026-11-11T15:30:00Z')), '2026/11/12');
+    assert.equal(H.formatDateTime(Date.parse('2026-11-11T15:30:00Z')), '2026/11/12 00:30');
+});
+
+test('シートの最終歌唱日と歌枠での記録の、新しいほうを使う(同じ日なら記録)', () => {
+    const record = { count: 2, lastAt: Date.parse('2026-11-11T12:00:00Z') };
+    assert.deepEqual(H.latestSung('2026/11/20', record), { at: H.parseSheetDate('2026/11/20'), source: 'sheet' });
+    assert.equal(H.latestSung('2026/11/11', record).source, 'history');
+    assert.equal(H.latestSung('2026/1/2', null).source, 'sheet');
+    assert.equal(H.latestSung('', record).source, 'history');
+    assert.equal(H.latestSung('', null), null);
+    assert.equal(H.latestSung('未定', { count: 0, lastAt: null }), null);
+    assert.equal(H.parseSheetDate('2026/02/30'), null);
+    assert.equal(H.formatDate(H.parseSheetDate('2026-1-31')), '2026/01/31');
+});
+
+test('CSV は式として読まれる値を無害にし、記録とシートに無い曲を新しい順に並べる', () => {
+    const rows = [{ title: '=HYPERLINK("x")', artist: 'A', lastSung: '2026/01/01' }, { title: 'Song', artist: 'B, C', lastSung: '' }];
+    const matched = H.matchHistory(rows, response([
+        { title: '=HYPERLINK("x")', performances: [{ videoId: VID(1), time: 30 }] },
+        { title: 'Song', performances: [{ videoId: VID(2), time: null }] },
+        { title: '-ERROR', artist: '@x', performances: [{ videoId: VID(3), time: 1 }] }
+    ], {
+        [VID(1)]: { title: 'a', eventAt: '2026-03-01T12:00:00Z' },
+        [VID(2)]: { title: 'b', eventAt: '2026-02-01T12:00:00Z' },
+        [VID(3)]: { title: 'c', eventAt: '2026-04-01T12:00:00Z' }
+    }));
+    const csv = H.buildCsv(rows, matched);
+    assert.ok(csv.startsWith('﻿状態,楽曲,'));
+    const lines = csv.slice(1).trim().split('\r\n');
+    assert.equal(lines.length, 4);
+    assert.equal(lines[1], `シートに無い,'-ERROR,'@x,1,2026/04/01,,,https://www.youtube.com/watch?v=${VID(3)}&t=1s,'-ERROR,`);
+    assert.equal(lines[2], `シートにある,"'=HYPERLINK(""x"")",A,1,2026/03/01,2026/01/01,○,https://www.youtube.com/watch?v=${VID(1)}&t=30s,"'=HYPERLINK(""x"")",`);
+    assert.equal(lines[3], `シートにある,Song,"B, C",1,2026/02/01,,○,https://www.youtube.com/watch?v=${VID(2)},Song,`);
+});

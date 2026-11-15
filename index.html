@@ -106,6 +106,13 @@
         </div>
 
         <div class="side-menu-section">
+            <h5 class="side-menu-section-title">歌枠での記録</h5>
+            <p class="side-menu-about">YouTube の歌枠のうち、配信のコメント欄にセトリがあった配信を、曲ごとに数えています。メンバー限定・Twitch・3D ライブ・歌ってみたは入りません。コラボ配信では、相手が歌った曲も入ります。「最後に歌った歌枠」は、楽曲データの「最終歌唱日」のほうが新しいときは、その日付を出します(「シート」と添えます)。</p>
+            <p class="side-menu-about">楽曲データの更新に使えるよう、記録のある曲と楽曲データに無い曲を CSV で保存できます(表示中のタレントの分)。</p>
+            <button type="button" id="historyCsvButton" class="btn btn-default history-csv-button" disabled>CSV を保存</button>
+        </div>
+
+        <div class="side-menu-section">
             <h5 class="side-menu-section-title">このサイトについて</h5>
             <p class="side-menu-about">VTuber事務所「PROJECT NEBULA（ぷろねぶ）」所属タレント（桃瀬にな・碓氷ゆら・鈴莉れん・菜鳥ひなた・紫雨るか）の歌唱楽曲まとめサイトです。</p>
         </div>
@@ -202,6 +209,16 @@
                     <span id="songCount" class="song-count"></span>
                     <span class="copy-hint">曲を押すとコピーします</span>
                 </p>
+                <div class="sort-control">
+                    <label for="sortOrder">並び順</label>
+                    <select id="sortOrder" class="form-control input-sm">
+                        <option value="reading">五十音</option>
+                        <option value="count">歌枠での記録が多い順</option>
+                        <option value="recent">最後に歌った日が新しい順</option>
+                        <option value="oldest">最後に歌った日が古い順</option>
+                        <option value="" hidden>—</option>
+                    </select>
+                </div>
                 <div class="page-length-controls" role="group" aria-label="1ページの表示件数">
                     <span class="page-length-label"><span class="page-length-label-long">1ページの</span>表示件数</span>
                     <button type="button" class="btn btn-default page-length-button active" data-page-length="10" aria-pressed="true">10</button>
@@ -209,6 +226,7 @@
                     <button type="button" class="btn btn-default page-length-button" data-page-length="50" aria-pressed="false">50</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="100" aria-pressed="false">100</button>
                 </div>
+                <p id="historyStatus" class="history-status"></p>
             </div>
             <div id="loadError" class="load-error" role="alert" hidden>
                 <p>データを読み込めませんでした。</p>
@@ -220,6 +238,13 @@
                         <th>楽曲</th>
                         <th>アーティスト</th>
                         <th>カテゴリ</th>
+                        <!-- 検索と並べ替えだけに使う列(表示しない) -->
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>歌枠での記録</th>
+                        <th>最後に歌った歌枠</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -228,7 +253,8 @@
         <footer class="page-footer">
             <small>
                 Create: <a href="https://x.com/o2i_5" target="_blank" rel="noopener noreferrer">@o2i_5</a> / 
-                Data: <a href="https://x.com/Shigure_1764" target="_blank" rel="noopener noreferrer">@Shigure_1764</a>
+                Data: <a href="https://x.com/Shigure_1764" target="_blank" rel="noopener noreferrer">@Shigure_1764</a> /
+                Setlist: 配信のコメント欄から(集計: <a href="/prnb-stream-calendar/">配信カレンダー</a>)
             </small>
         </footer>
     </div>
@@ -243,6 +269,20 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
+    <!-- 歌った配信の一覧(歌枠での記録のボタンで開く) -->
+    <dialog id="historyDialog" class="history-dialog" aria-labelledby="historyDialogTitle">
+        <div class="history-dialog-header">
+            <h2 id="historyDialogTitle" class="history-dialog-title"></h2>
+            <button type="button" id="historyDialogClose" class="menu-close-button" aria-label="閉じる">×</button>
+        </div>
+        <p id="historyDialogSummary" class="history-dialog-summary"></p>
+        <p id="historyDialogSheet" class="history-dialog-note" hidden></p>
+        <p id="historyDialogAmbiguous" class="history-dialog-note" hidden></p>
+        <ul id="historyDialogList" class="history-dialog-list"></ul>
+        <p class="history-dialog-note">セトリは配信のコメント欄から集めたものです。コラボ配信では、相手が歌った曲も入ります。</p>
+    </dialog>
+
+    <script src="js/song-history.js"></script>
     <script src="js/script.js"></script>
 </body>
 

@@ -23,6 +23,35 @@ export async function mockGas(page, handler) {
     return calls;
 }
 
+const HISTORY_PATTERN = '**/prnb-stream-calendar/api/song-history?*';
+
+/**
+ * 配信カレンダーの歌枠での記録(/api/song-history)の代わりを返す。
+ * handler には talent を渡し、応答の中身、{ status } (HTTP の失敗)、'abort'、'hang'(応答しない)のどれかを返す。
+ * 呼ばれた talent の一覧を返す
+ */
+export async function mockHistory(page, handler) {
+    const calls = [];
+    await page.route(HISTORY_PATTERN, async route => {
+        const talent = new URL(route.request().url()).searchParams.get('talent');
+        calls.push(talent);
+        const result = handler ? await handler(talent) : { songs: [], streams: {}, updatedAt: '2026-11-15T03:00:00Z' };
+        if (result === 'abort') {
+            await route.abort();
+            return;
+        }
+        if (result === 'hang') {
+            return;
+        }
+        if (result && result.status) {
+            await route.fulfill({ status: result.status, body: 'error' });
+            return;
+        }
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify(result) });
+    });
+    return calls;
+}
+
 /** 外部のフォントは読まない(テストをネットワークに左右させない) */
 export async function blockExternal(page) {
     await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());

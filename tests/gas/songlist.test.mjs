@@ -57,6 +57,16 @@ function loadGas({ tables = {}, cache = createCache() } = {}) {
                 }
             })
         },
+        // 日本時間の yyyy/MM/dd だけを扱う Utilities.formatDate の代わり
+        Utilities: {
+            formatDate: (date, timeZone, format) => {
+                assert.equal(timeZone, 'Asia/Tokyo');
+                assert.equal(format, 'yyyy/MM/dd');
+                const d = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getUTCFullYear()}/${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())}`;
+            }
+        },
         console: { error: msg => logs.push(msg), warn: msg => logs.push(msg) }
     };
     vm.createContext(context);
@@ -90,8 +100,32 @@ test('見出しの名前で列を対応づけ、使わない列と曲名が空�
 
     assert.deepEqual(body, {
         rows: [
-            { reading: 'あおいそら', title: '青い空', artist: 'アーティストA', category: 'J-POP', genre: 'バラード', type: '' },
-            { reading: 'いちきゅうにご', title: 1925, artist: 'アーティストC', category: 'ボカロ', genre: '', type: '弾き語り' }
+            { reading: 'あおいそら', title: '青い空', artist: 'アーティストA', category: 'J-POP', genre: 'バラード', type: '', lastSung: '2026/01/01' },
+            { reading: 'いちきゅうにご', title: 1925, artist: 'アーティストC', category: 'ボカロ', genre: '', type: '弾き語り', lastSung: '' }
+        ]
+    });
+});
+
+test('最終歌唱日は、日付のセルを日本時間の「yyyy/MM/dd」にし、文字はそのまま返す', () => {
+    const { gas } = loadGas({
+        tables: {
+            [NINA_SHEET]: [
+                ['楽曲', '最終歌唱日'],
+                // 日本時間の 2026/01/31 0:00(UTC では前の日)
+                ['青い空', new Date('2026-01-30T15:00:00Z')],
+                ['白い雲', ' 2025/12/24 '],
+                ['黄色い花', ''],
+                ['赤い実', new Date('invalid')]
+            ]
+        }
+    });
+
+    assert.deepEqual(parse(gas.doGet({ parameter: { talent: 'nina' } })), {
+        rows: [
+            { title: '青い空', lastSung: '2026/01/31' },
+            { title: '白い雲', lastSung: '2025/12/24' },
+            { title: '黄色い花', lastSung: '' },
+            { title: '赤い実', lastSung: '' }
         ]
     });
 });
