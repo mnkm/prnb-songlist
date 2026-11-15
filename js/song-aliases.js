@@ -7,6 +7,9 @@
     'use strict';
 
     const SONG_ALIASES = [
+        // 全員(英語の題名と日本語の題名。シートにある方の行につなぐ)
+        ['A Whole New World', 'ホール・ニュー・ワールド'],
+        ['ホール・ニュー・ワールド', 'A Whole New World'],
         // 桃瀬にな
         ['Walkure Attack!', 'Walküre Attack!'],
         ['START DASH SENSATION', 'STAR DASH SENSATION'],
