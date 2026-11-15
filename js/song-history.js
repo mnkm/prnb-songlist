@@ -1,6 +1,6 @@
 // 歌枠での記録(配信カレンダーの /api/song-history)を、楽曲リストの曲に突き合わせる。
 // 画面(js/script.js)とテスト(tests/unit/)の両方から使うため、DOM や jQuery を使わずに書く。
-// 曲名のそろえ方は、配信カレンダーの src/shared/search.ts の songKey と同じ規則にしている。
+// 曲名のそろえ方は、配信カレンダーの src/shared/search.ts の songKey の規則に、ひらがなとカタカナをそろえることを足したもの。
 (function (root) {
     'use strict';
 
@@ -16,22 +16,36 @@
     const FEAT = /\s*(?:\bfeat\b|\bft\b)\.?.*$/i;
     // 曲名の末尾の「～…～」「〜…〜」「-…-」で囲んだサブタイトル(途中のものは曲名の一部のことがあるので外さない)
     const TRAILING_SUBTITLE = /\s*(?:[~〜][^~〜]+[~〜]|-[^-]+-)\s*$/;
+    // 異体字セレクタ(‼︎ の U+FE0E など)
+    const VARIATION_SELECTORS = /[\uFE00-\uFE0F]/g;
+    // セトリの行の頭に付く曲順の印(「No.1」「①」「EN」「EN2」「1曲目「」)。規則 2 で外す
+    const LEADING_MARK = /^(?:no\.?\s*\d+\s+|en\d?\s+|\d+曲目「)/;
+    const CIRCLED_NUMBER = /^\s*[\u2460-\u2473]\s*/;
+    // 閉じていない括弧から後ろ(「残酷な天使のテーゼ(アカペラ」など)。規則 2 で外す
+    const UNCLOSED_BRACKET = /\s*[(（][^)）]*$/;
     const JST_OFFSET = 9 * 60 * 60 * 1000;
 
     function normalize(text) {
-        return String(text == null ? '' : text).normalize('NFKC').replace(FORMAT_CHARS, '').toLowerCase().trim();
+        return String(text == null ? '' : text).normalize('NFKC')
+            .replace(FORMAT_CHARS, '').replace(VARIATION_SELECTORS, '').toLowerCase().trim();
+    }
+
+    // キーでは、ひらがなをカタカナにそろえる(「ハレ晴れユカイ」と「ハレ晴レユカイ」、「丸ノ内」と「丸の内」など)
+    function foldKana(text) {
+        return text.replace(/[ぁ-ゖ]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
     }
 
     // 規則 1: 突き合わせ用のキー。記号だけの曲名は、記号を残したものをキーにする
     function songKey(title) {
-        const normalized = normalize(title);
+        const normalized = foldKana(normalize(title));
         return normalized.replace(SPACE_PUNCT_SYMBOL, '') || normalized;
     }
 
     // 規則 2: 括弧の中と「feat. …」を外したキー。何も残らないときは空(この規則を使わない)
     function looseKey(title) {
-        const normalized = normalize(title);
-        let stripped = normalized;
+        // 丸数字(①)は NFKC で数字になるので、そろえる前に外す
+        const normalized = foldKana(normalize(String(title == null ? '' : title).replace(CIRCLED_NUMBER, '')));
+        let stripped = normalized.replace(LEADING_MARK, '');
         // 入れ子の括弧も外れるよう、変わらなくなるまで繰り返す
         for (let i = 0; i < 5; i++) {
             const next = stripped.replace(BRACKETS, ' ');
@@ -40,7 +54,7 @@
             }
             stripped = next;
         }
-        stripped = stripped.replace(FEAT, '').replace(TRAILING_SUBTITLE, '');
+        stripped = stripped.replace(FEAT, '').replace(UNCLOSED_BRACKET, '').replace(TRAILING_SUBTITLE, '');
         return stripped.replace(SPACE_PUNCT_SYMBOL, '');
     }
 
@@ -150,6 +164,12 @@
      *  - unmatched: シートに無い曲 [{ title, artist, count, lastAt, performances }](回数の多い順)
      *  - since: 記録のいちばん古い配信の日時(ミリ秒)、updatedAt: 集計の日時(ミリ秒)
      */
+    // 対応表(js/song-aliases.js)。キーはセトリの書き方の songKey
+    const ALIASES = typeof module === 'object' && module.exports
+        ? require('./song-aliases.js')
+        : (root.SONG_ALIASES || []);
+    const aliasMap = new Map(ALIASES.map(pair => [songKey(pair[0]), pair[1]]));
+
     function matchHistory(rows, response) {
         const records = rows.map(() => null);
         const result = { records: records, unmatched: [], since: null, updatedAt: null };
@@ -202,10 +222,19 @@
                 }
             });
 
-            let candidates = byKey.get(songKey(song.title));
+            const lookup = function (title) {
+                let found = byKey.get(songKey(title));
+                if (!found) {
+                    const loose = looseKey(title);
+                    found = loose ? byLooseKey.get(loose) : undefined;
+                }
+                return found;
+            };
+            let candidates = lookup(song.title);
             if (!candidates) {
-                const loose = looseKey(song.title);
-                candidates = loose ? byLooseKey.get(loose) : undefined;
+                // 規則でつながらなければ、対応表(js/song-aliases.js)のシートの曲名で引く
+                const alias = aliasMap.get(songKey(song.title));
+                candidates = alias ? lookup(alias) : undefined;
             }
 
             if (!candidates) {

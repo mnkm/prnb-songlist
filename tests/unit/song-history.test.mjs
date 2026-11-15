@@ -12,9 +12,9 @@ function response(songs, streams = {}) {
     return { songs, streams, updatedAt: '2026-11-15T03:00:00Z' };
 }
 
-test('曲名のキーは配信カレンダーの songKey と同じ規則でそろえる(docs/details.md の例)', () => {
+test('曲名のキーは配信カレンダーの songKey の規則に、ひらがなをカタカナにそろえることを足したもの(docs/details.md の例)', () => {
     assert.equal(H.songKey('ＬＥＭＯＮ！'), 'lemon');
-    assert.equal(H.songKey('夜に 駆ける'), '夜に駆ける');
+    assert.equal(H.songKey('夜に 駆ける'), '夜ニ駆ケル');
     assert.equal(H.songKey('Lemon (Acoustic ver.)'), 'lemonacousticver');
     // 記号だけの曲名は、記号を残す
     assert.equal(H.songKey('!!!'), '!!!');
@@ -24,7 +24,7 @@ test('曲名のキーは配信カレンダーの songKey と同じ規則でそ�
 
 test('規則 2 は括弧の中と feat. 以降を外し、何も残らなければ空にする', () => {
     assert.equal(H.looseKey('勇者 (Yuusha)'), '勇者');
-    assert.equal(H.looseKey('おじゃま虫 feat. 初音ミク'), 'おじゃま虫');
+    assert.equal(H.looseKey('おじゃま虫 feat. 初音ミク'), 'オジャマ虫');
     assert.equal(H.looseKey('「君と僕の歌」'), '');
     // 曲名の途中のハイフンは外さない
     assert.equal(H.looseKey('CHA-LA HEAD-CHA-LA'), 'chalaheadchala');
@@ -111,6 +111,29 @@ test('アーティストで決まらない回は、曲名の書き方まで同�
     // 書き方が両方と違う回(Watch-Me)は数えない
     assert.equal(result.records[0].ambiguous, 1);
     assert.equal(result.records[1].ambiguous, 1);
+});
+
+test('キーではひらがなとカタカナを区別せず、規則 2 では曲順の印と閉じていない括弧を外す', () => {
+    assert.equal(H.songKey('ハレ晴れユカイ'), H.songKey('ハレ晴レユカイ'));
+    assert.equal(H.songKey('おジャ魔女カーニバル‼︎'), H.songKey('おジャ魔女カーニバル!!'));
+    assert.equal(H.looseKey('①Summer麺'), H.looseKey('Summer麺'));
+    assert.equal(H.looseKey('No.3  カタオモイ'), H.looseKey('カタオモイ'));
+    assert.equal(H.looseKey('EN2 ファンサ'), H.looseKey('ファンサ'));
+    assert.equal(H.looseKey('1曲目「しゅきぴ'), H.looseKey('しゅきぴ'));
+    assert.equal(H.looseKey('残酷な天使のテーゼ(アカペラ'), H.looseKey('残酷な天使のテーゼ'));
+    // 数字で始まる曲名は、規則 1 では外さない
+    assert.equal(H.songKey('20-CRY-'), '20cry');
+});
+
+test('規則でつながらない曲は、対応表(js/song-aliases.js)のシートの曲名で引く', () => {
+    const rows = [{ title: '君をのせて', artist: '井上あずみ' }, { title: 'レット・イット・ゴー～ありのままで～ [Heartful ver.]', artist: 'May J.' }];
+    const result = H.matchHistory(rows, response([
+        { title: '君にのせて', performances: [{ videoId: VID(1), time: 1 }] },
+        { title: 'Let It Go~ありのままで~', performances: [{ videoId: VID(2), time: 1 }] }
+    ]));
+    assert.equal(result.records[0].count, 1);
+    assert.equal(result.records[1].count, 1);
+    assert.equal(result.unmatched.length, 0);
 });
 
 test('形の違う値は使わない', () => {
