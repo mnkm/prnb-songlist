@@ -165,10 +165,51 @@
      *  - since: 記録のいちばん古い配信の日時(ミリ秒)、updatedAt: 集計の日時(ミリ秒)
      */
     // 対応表(js/song-aliases.js)。キーはセトリの書き方の songKey
-    const ALIASES = typeof module === 'object' && module.exports
+    // 同じ曲として回数をまとめる曲名の組(js/song-aliases.js の SONG_SAME)。songKey の組にしておく
+    const ALIAS_DATA = typeof module === 'object' && module.exports
         ? require('./song-aliases.js')
-        : (root.SONG_ALIASES || []);
-    const aliasMap = new Map(ALIASES.map(pair => [songKey(pair[0]), pair[1]]));
+        : { aliases: root.SONG_ALIASES || [], same: root.SONG_SAME || [] };
+    const aliasMap = new Map((ALIAS_DATA.aliases || []).map(pair => [songKey(pair[0]), pair[1]]));
+    const sameGroups = (ALIAS_DATA.same || []).map(group => group.map(songKey));
+
+    // 同じ曲の組の行どうしで、記録をまとめて同じものを出す
+    function shareSameSongs(rows, records) {
+        sameGroups.forEach(group => {
+            const indexes = [];
+            rows.forEach((row, index) => {
+                if (group.includes(songKey(row.title))) {
+                    indexes.push(index);
+                }
+            });
+            if (indexes.length < 2 || indexes.every(index => !records[index])) {
+                return;
+            }
+            const merged = emptyRecord();
+            indexes.forEach(index => {
+                const record = records[index];
+                if (!record) {
+                    return;
+                }
+                record.performances.forEach(p => merged.performances.push(p));
+                merged.count += record.count;
+                merged.ambiguous += record.ambiguous;
+                if (record.lastAt != null && (merged.lastAt == null || record.lastAt > merged.lastAt)) {
+                    merged.lastAt = record.lastAt;
+                }
+                record.setlistTitles.forEach(title => {
+                    if (!merged.setlistTitles.includes(title)) {
+                        merged.setlistTitles.push(title);
+                    }
+                });
+            });
+            indexes.forEach(index => {
+                records[index] = Object.assign({}, merged, {
+                    performances: merged.performances.slice(),
+                    setlistTitles: merged.setlistTitles.slice()
+                });
+            });
+        });
+    }
 
     function matchHistory(rows, response) {
         const records = rows.map(() => null);
@@ -275,6 +316,8 @@
                 addPerformance(records[target], p, song.title);
             });
         });
+
+        shareSameSongs(rows, records);
 
         const newestFirst = (a, b) => (b.at || 0) - (a.at || 0);
         records.forEach(record => {

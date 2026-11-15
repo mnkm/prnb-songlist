@@ -136,6 +136,26 @@ test('規則でつながらない曲は、対応表(js/song-aliases.js)のシー
     assert.equal(result.unmatched.length, 0);
 });
 
+test('同じ曲の組(SONG_SAME)の行が両方あれば、どちらにもまとめた回数を出す', () => {
+    const rows = [
+        { title: 'A Whole New World', artist: 'Peabo Bryson & Regina Belle' },
+        { title: 'ホール・ニュー・ワールド', artist: '石井一孝・麻生かほ里' }
+    ];
+    const result = H.matchHistory(rows, response([
+        { title: 'A Whole New World', performances: [{ videoId: VID(1), time: 1 }, { videoId: VID(2), time: 1 }] },
+        { title: 'ホール・ニュー・ワールド', performances: [{ videoId: VID(3), time: 1 }] }
+    ]));
+    assert.equal(result.records[0].count, 3);
+    assert.equal(result.records[1].count, 3);
+    assert.deepEqual(result.records[0].setlistTitles, result.records[1].setlistTitles);
+    // 片方の行だけのシートでは、対応表でその行に入る
+    const single = H.matchHistory([rows[1]], response([
+        { title: 'A Whole New World', performances: [{ videoId: VID(1), time: 1 }] }
+    ]));
+    assert.equal(single.records[0].count, 1);
+    assert.equal(single.unmatched.length, 0);
+});
+
 test('形の違う値は使わない', () => {
     const rows = [{ title: 'Song', artist: 'A' }];
     const result = H.matchHistory(rows, response([

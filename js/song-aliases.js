@@ -14,6 +14,10 @@
         ['Walkure Attack!', 'Walküre Attack!'],
         ['START DASH SENSATION', 'STAR DASH SENSATION'],
         ['真夏のSounds good !', '真夏のSound good！'],
+        ['Kimi no Shiranai Monogatari', '君の知らない物語'],
+        ['Sis x Love', 'シス ✕ ラブ'],
+        ['Valentine Kiss', 'バレンタイン・キッス'],
+        ['Yume wo Kanaete', '夢をかなえてドラえもん'],
         ["Don't Be Late", "射手座☆午後九時 Don't be late"],
         ['すきつ!  (Suki!)', 'すきっ！'],
         ['More Than Word', 'more than words'],
@@ -100,9 +104,17 @@
         ['昼蔦', '昼鳶']
     ];
 
+    // 同じ曲として、同じ回数を出す曲名の組。タレントのシートに組の曲名の行が 2 つ以上あるとき
+    // (英語版と日本語版を別の行にしている場合など)、どの行にもその組の回数をまとめて出す。
+    // 曲名は、シートの曲名と規則 1(js/song-history.js の songKey)で一致する書き方にする
+    const SONG_SAME = [
+        ['A Whole New World', 'ホール・ニュー・ワールド']
+    ];
+
     if (typeof module === 'object' && module.exports) {
-        module.exports = SONG_ALIASES;
+        module.exports = { aliases: SONG_ALIASES, same: SONG_SAME };
     } else {
         root.SONG_ALIASES = SONG_ALIASES;
+        root.SONG_SAME = SONG_SAME;
     }
 })(typeof globalThis !== 'undefined' ? globalThis : this);
