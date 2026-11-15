@@ -18,6 +18,7 @@
         ['Sis x Love', 'シス ✕ ラブ'],
         ['Valentine Kiss', 'バレンタイン・キッス'],
         ['Yume wo Kanaete', '夢をかなえてドラえもん'],
+        ['shall we dance', 'シャル・ウィ・ダンス？'],
         ["Don't Be Late", "射手座☆午後九時 Don't be late"],
         ['すきつ!  (Suki!)', 'すきっ！'],
         ['More Than Word', 'more than words'],
