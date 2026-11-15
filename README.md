@@ -29,6 +29,7 @@ GAS のソースは [`gas/`](./gas/) で [clasp](https://github.com/google/clasp
 - **曲の突き合わせ**(`js/song-history.js`): 曲名を、配信カレンダーと同じ規則(NFKC → 小文字 → 空白・句読点・記号を除く)でそろえて一致させます。一致しなければ、括弧の中と「feat. …」を外して、もう一度比べます(「Piano Ver.」なども元の曲に数えます)。楽曲データに同じ曲名の曲が複数あるときは、その回のセトリのアーティストで選び、決まらない回は数えません。
 - **最後に歌った歌枠**: 楽曲データの「最終歌唱日」の列と比べ、新しいほうを出します。楽曲データの日付には「シート」と添えます。
 - **読めないとき**: API が失敗しても(8 秒で打ち切ります)、一覧はそのまま出し、記録の列だけを空にします。`npx serve .` で開いたときは API が無いので、いつもこの表示になります。
+- **テスト環境**: Cloudflare Pages のプレビュー(`*.pages.dev`)には配信カレンダーが無いので、`functions/prnb-stream-calendar/api/song-history.js`(Pages の Functions)が同じパスで本番の API の応答を中継します。本番の mnkm.page では、このパスは前段の Worker が配信カレンダーへ送るので使いません。
 
 ## 構成
 
@@ -44,6 +45,7 @@ HTML・CSS・JavaScript だけで作っており、ビルドツールは使い�
 │   └── copy-vendor.mjs  # ライブラリを node_modules から vendor/ へコピーする
 ├── vendor/         # npm からコピーしたライブラリ(リポジトリには含めない)
 ├── gas/            # データを返す GAS のソース(clasp で管理)
+├── functions/      # テスト環境で配信カレンダーの API を中継する(Cloudflare Pages の Functions)
 ├── tests/
 │   ├── unit/       # 歌枠での記録の突き合わせのテスト(Node.js のテストランナー)
 │   ├── e2e/        # 画面のテスト(Playwright)
