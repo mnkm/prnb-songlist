@@ -219,7 +219,7 @@ $(function () {
         // 狭い画面で絞り込みを開いても、表が数行は見えるようにする(はみ出した分は表の欄ごとスクロールする)
         const minHeight = mobileMediaQuery.matches ? 160 : 0;
         if (!wrapper.length) {
-            return Math.max(50, tableArea.innerHeight() - toolbarHeight - 100);
+            return Math.max(50, tableArea.height() - toolbarHeight - 100);
         }
 
         const scrollHeadHeight = wrapper.find('.dataTables_scrollHead').outerHeight(true) || 0;
@@ -227,7 +227,7 @@ $(function () {
         const pagerHeight = wrapper.find('.dataTables_paginate').outerHeight(true) || 0;
         const controlsHeight = toolbarHeight + scrollHeadHeight + infoHeight + pagerHeight;
 
-        return Math.max(minHeight, tableArea.innerHeight() - controlsHeight);
+        return Math.max(minHeight, tableArea.height() - controlsHeight);
     }
 
     function showLoading() {

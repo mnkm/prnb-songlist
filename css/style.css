@@ -72,12 +72,6 @@ a {
   box-shadow: none;
 }
 
-/* 表の欄(.table-area)は外にはみ出した分を切るので、その中の操作部品は枠を内側に描く */
-.table-toolbar :focus-visible,
-.table-toolbar .form-control:focus {
-  outline-offset: -2px;
-}
-
 .form-control {
   background-color: var(--input-background);
   border-color: var(--border-color);
@@ -330,6 +324,10 @@ a {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  /* 表の欄ははみ出した分を切るので、中の操作部品のフォーカスの枠(外側 4px)が切れないよう、
+     余白を取り、同じ幅だけ外へ広げて位置を変えない */
+  padding: 4px;
+  margin: -4px;
   display: flex;
   flex-direction: column;
 }
