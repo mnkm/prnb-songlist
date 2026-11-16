@@ -508,6 +508,9 @@ test.describe('歌枠での記録', () => {
         await openWithHistory(page);
         await page.locator('#sortOrder').selectOption('count');
         expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', 'Star Song', '白い雲']);
+        // 少ない順でも、記録の無い曲は下にする
+        await page.locator('#sortOrder').selectOption('fewest');
+        expect(await visibleTitles(page)).toEqual(['黄色い花', 'Star Song', '青い空', '白い雲']);
         await page.locator('#sortOrder').selectOption('recent');
         expect(await visibleTitles(page)).toEqual(['黄色い花', '青い空', 'Star Song', '白い雲']);
         await page.locator('#sortOrder').selectOption('oldest');
@@ -520,6 +523,10 @@ test.describe('歌枠での記録', () => {
         await expect(page.locator('#sortOrder')).toHaveValue('count');
         await page.locator('.dataTables_scrollHead th', { hasText: '歌った回数' }).click();
         expect(await visibleTitles(page)).toEqual(['黄色い花', 'Star Song', '青い空', '白い雲']);
+        await expect(page.locator('#sortOrder')).toHaveValue('fewest');
+        // 選択肢に無い並び(曲名の逆順)では、欄を空にする
+        await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
+        await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
         await expect(page.locator('#sortOrder')).toHaveValue('');
     });
 

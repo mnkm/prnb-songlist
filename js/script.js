@@ -841,6 +841,7 @@ $(function () {
     const SORT_ORDERS = {
         reading: [[0, 'asc']],
         count: [[COLUMN_COUNT, 'desc']],
+        fewest: [[COLUMN_COUNT, 'asc']],
         recent: [[COLUMN_LAST, 'desc']],
         oldest: [[COLUMN_LAST, 'asc']]
     };
