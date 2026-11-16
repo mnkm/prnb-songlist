@@ -267,6 +267,7 @@ $(function () {
                 .toggleClass('active', isActive)
                 .attr('aria-pressed', isActive ? 'true' : 'false');
         });
+        $('#pageLengthSelect').val(String(pageLength));
     }
 
     $('.page-length-button').on('click', function () {
@@ -275,6 +276,15 @@ $(function () {
         }
 
         table.page.len(Number($(this).data('page-length'))).draw();
+        updatePageLengthButtons();
+    });
+
+    // スマートフォンの幅で出す、表示件数の選択欄
+    $('#pageLengthSelect').on('change', function () {
+        if (!table) {
+            return;
+        }
+        table.page.len(Number($(this).val())).draw();
         updatePageLengthButtons();
     });
 
@@ -506,7 +516,8 @@ $(function () {
         return Object.assign({ data: data, render: $.fn.dataTable.render.text() }, options);
     }
 
-    // 曲名の列。スマートフォンの幅では、アーティストとカテゴリを 2 行目に出す
+    // 曲名の列。スマートフォンの幅では、アーティスト・カテゴリ・歌った回数を 2 行目に出す
+    // (行を低くして、表に見える曲を増やすため。回数は 2 行目の右端に置く)
     function renderTitle(data, type, row) {
         if (type !== 'display') {
             return data;
@@ -518,20 +529,20 @@ $(function () {
         // 区切りの記号はアーティスト名にも含まれることがあるので使わず、カテゴリは枠で囲んで分ける
         const artist = row.artist ? `<span class="song-sub-artist">${escapeText(row.artist)}</span>` : '';
         const category = row.category ? `<span class="song-sub-category">${escapeText(row.category)}</span>` : '';
-        const sub = artist || category ? `<span class="song-sub">${artist}${category}</span>` : '';
         const record = row.history;
         const latest = row.latest;
         let history = '';
         if (record) {
-            const parts = [record.count ? `歌唱 ${record.count} 回` : '歌枠の記録: 同名の曲と区別できません'];
+            const parts = [record.count ? `歌唱 ${record.count} 回` : '区別できません'];
             if (latest) {
                 parts.push(`最終 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
             }
-            history = `<span class="song-sub song-sub-history">${historyButton(row, parts.join('・'))}</span>`;
+            history = historyButton(row, parts.join('・'));
         } else if (latest) {
-            history = `<span class="song-sub song-sub-history">最後に歌った日 ${escapeText(SongHistory.formatDate(latest.at))}(シート)</span>`;
+            history = `<span class="song-sub-last">最終 ${escapeText(SongHistory.formatDate(latest.at))}(シート)</span>`;
         }
-        return title + sub + history;
+        const sub = artist || category || history ? `<span class="song-sub">${artist}${category}${history}</span>` : '';
+        return title + sub;
     }
 
     // 歌枠での記録の列(回数・最後に歌った歌枠)。並べ替えでは、記録の無い曲をいつも一番下にする

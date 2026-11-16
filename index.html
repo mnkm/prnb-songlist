@@ -205,10 +205,10 @@
                 <div class="sort-control">
                     <label for="sortOrder">並び順</label>
                     <select id="sortOrder" class="form-control input-sm">
-                        <option value="reading">五十音</option>
+                        <option value="reading">五十音順</option>
                         <option value="count">歌った回数が多い順</option>
-                        <option value="recent">最後に歌った日が新しい順</option>
-                        <option value="oldest">最後に歌った日が古い順</option>
+                        <option value="recent">歌った日が新しい順</option>
+                        <option value="oldest">歌った日が古い順</option>
                         <option value="" hidden>—</option>
                     </select>
                 </div>
@@ -218,6 +218,13 @@
                     <button type="button" class="btn btn-default page-length-button" data-page-length="25" aria-pressed="false">25</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="50" aria-pressed="false">50</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="100" aria-pressed="false">100</button>
+                    <!-- スマートフォンの幅では、ボタンの代わりにこちらを出す(ツールバーを 1 行に収めるため) -->
+                    <select id="pageLengthSelect" class="form-control page-length-select" aria-label="1ページの表示件数">
+                        <option value="10">10 件</option>
+                        <option value="25">25 件</option>
+                        <option value="50">50 件</option>
+                        <option value="100">100 件</option>
+                    </select>
                 </div>
                 <p id="historyStatus" class="history-status"></p>
             </div>

@@ -645,13 +645,43 @@ test.describe('歌枠での記録', () => {
     test.describe('スマートフォンの幅', () => {
         test.use({ viewport: { width: 390, height: 844 } });
 
-        test('列を足さず、曲名の下に回数と最後の日を出し、並び順を選べる', async ({ page }) => {
+        test('列を足さず、曲名の 2 行目に回数と最後の日を出し、並び順を選べる', async ({ page }) => {
             await openWithHistory(page);
             await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
             const rows = page.locator('#grid tbody tr');
-            await expect(rows.nth(0).locator('.history-button')).toHaveText('歌唱 3 回・最終 2026/11/11');
-            await expect(rows.nth(1).locator('.history-button')).toHaveText('歌唱 1 回・最終 2026/12/01(シート)');
-            await expect(rows.nth(2).locator('.song-sub-history')).toHaveText('最後に歌った日 2026/10/01(シート)');
+            // 回数はアーティストと同じ 2 行目に置く(行を低くするため)
+            await expect(rows.nth(0).locator('.song-sub .history-button')).toHaveText('歌唱 3 回・最終 2026/11/11');
+            await expect(rows.nth(1).locator('.song-sub .history-button')).toHaveText('歌唱 1 回・最終 2026/12/01(シート)');
+            await expect(rows.nth(2).locator('.song-sub .song-sub-last')).toHaveText('最終 2026/10/01(シート)');
+            const [artistBox, buttonBox] = await Promise.all([
+                rows.nth(0).locator('.song-sub-artist').boundingBox(),
+                rows.nth(0).locator('.history-button').boundingBox()
+            ]);
+            expect(Math.abs(artistBox.y + artistBox.height / 2 - (buttonBox.y + buttonBox.height / 2))).toBeLessThan(4);
+
+            // 曲数・並び順・表示件数は 1 行に並べ、表示件数は選択欄で選ぶ
+            await expect(page.locator('.copy-hint')).toBeHidden();
+            await expect(page.locator('.page-length-button').first()).toBeHidden();
+            const tops = await page.locator('#songCount, #sortOrder, #pageLengthSelect').evaluateAll(els => els.map(e => {
+                const r = e.getBoundingClientRect();
+                return Math.round(r.top + r.height / 2);
+            }));
+            expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(4);
+            await page.locator('#pageLengthSelect').selectOption('25');
+            await expect(page.locator('#pageLengthSelect')).toHaveValue('25');
+            await expect(page.locator('.page-length-button[data-page-length="25"]')).toHaveAttribute('aria-pressed', 'true');
+
+            // 検索欄と「絞り込み」も 1 行に並べる
+            const [searchBox, toggleBox] = await Promise.all([
+                page.locator('#textFilter').boundingBox(),
+                page.locator('#filterToggle').boundingBox()
+            ]);
+            expect(Math.abs(searchBox.y - toggleBox.y)).toBeLessThan(4);
+
+            // 長いアーティスト名でも、表が横にはみ出さない
+            const overflow = await page.locator('.dataTables_scrollBody').evaluate(el => el.scrollWidth - el.clientWidth);
+            expect(overflow).toBeLessThanOrEqual(0);
+
             await page.locator('#sortOrder').selectOption('count');
             expect(await rows.locator('td:first-child .song-sub').count()).toBeGreaterThan(0);
             await rows.nth(0).locator('.history-button').click();

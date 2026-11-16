@@ -34,7 +34,7 @@ export const HISTORY_SONGS = {
         { reading: 'あおいそら', title: '青い空', artist: 'アーティストA', category: 'J-POP', genre: 'バラード', type: '', lastSung: '' },
         { reading: 'きいろいはな', title: '黄色い花', artist: 'アーティストB', category: 'アニソン', genre: 'ロック', type: '', lastSung: '2026/12/01' },
         { reading: 'しろいくも', title: '白い雲', artist: 'アーティストA', category: 'J-POP', genre: 'ロック', type: '', lastSung: '2026/10/01' },
-        { reading: 'ほしのうた', title: 'Star Song', artist: 'アーティストC', category: 'ボカロ', genre: 'バラード', type: '', lastSung: '' }
+        { reading: 'ほしのうた', title: 'Star Song', artist: 'アーティストC feat. とても長い名前の歌い手 & もう一人の歌い手 & さらにもう一人', category: 'ボカロ', genre: 'バラード', type: '', lastSung: '' }
     ]
 };
 export const HISTORY = {

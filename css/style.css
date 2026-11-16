@@ -1076,13 +1076,88 @@ table.dataTable tbody td.dataTables_empty {
   color: var(--muted-text-color);
 }
 
-.song-sub-history {
-  margin-top: 4px;
+/* 2 行目の右端に置く、歌った回数のボタンとシートの日付 */
+.song-sub .history-button,
+.song-sub-last {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* 表示件数の選択欄は、スマートフォンの幅だけで出す */
+.page-length-select {
+  display: none;
 }
 
 @media (max-width: 767px) {
   /* 狭い画面では表を広く使うため、集計の期間は出さず、読めなかったときだけ出す */
   .history-status:not(.is-error) {
     display: none;
+  }
+}
+
+/* スマートフォンの幅: 表に見える曲を増やすため、操作欄を詰める */
+@media (max-width: 767px) {
+  /* 検索欄と「絞り込み」を 1 行にする */
+  .search-box {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 曲数・並び順・表示件数を 1 行にする。説明の文は出さない(押すとコピーのお知らせが出る) */
+  .table-toolbar {
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .copy-hint {
+    display: none;
+  }
+
+  .sort-control {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 「並び順」の文字は画面には出さず、読み上げにだけ使う */
+  .sort-control label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .sort-control select,
+  .page-length-select {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .sort-control select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .page-length-label,
+  .page-length-button {
+    display: none;
+  }
+
+  .page-length-select {
+    display: block;
+    width: auto;
+    background-color: var(--input-background);
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+
+  /* 長いアーティスト名で表が横にはみ出さないよう、列の幅を表の幅に合わせる */
+  #grid {
+    table-layout: fixed;
+  }
+
+  .song-sub-artist {
+    flex: 0 1 auto;
   }
 }
