@@ -72,6 +72,12 @@ a {
   box-shadow: none;
 }
 
+/* 表の欄(.table-area)は外にはみ出した分を切るので、その中の操作部品は枠を内側に描く */
+.table-toolbar :focus-visible,
+.table-toolbar .form-control:focus {
+  outline-offset: -2px;
+}
+
 .form-control {
   background-color: var(--input-background);
   border-color: var(--border-color);
