@@ -618,8 +618,8 @@ $(function () {
                     { data: 'sortKey', visible: false, searchable: false },
 
                     // 歌枠での記録。キーワード検索の対象にしない(「3」などで回数や日付に当たらないように)
-                    { data: null, title: '歌枠での記録', render: renderCount, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-count' },
-                    { data: null, title: '最後に歌った歌枠', render: renderLast, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-last' }
+                    { data: null, title: '歌った回数', render: renderCount, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-count' },
+                    { data: null, title: '最後に歌った日', render: renderLast, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-last' }
                 ],
 
                 // 行に Tab キーで移れるようにする
@@ -774,7 +774,7 @@ $(function () {
         $('#historyDialogTitle').text(row.title);
         const sheetDate = SongHistory.parseSheetDate(row.lastSung);
         $('#historyDialogSummary').text(record.count
-            ? `歌枠での記録 ${record.count} 回・最後に歌った歌枠 ${SongHistory.formatDate(record.lastAt)}`
+            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(record.lastAt)}`
             : '歌枠での記録はありますが、同名の曲と区別できないため数えていません。');
         $('#historyDialogSheet')
             .text(sheetDate != null ? `シートの最終歌唱日: ${SongHistory.formatDate(sheetDate)}` : '')

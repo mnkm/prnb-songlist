@@ -496,7 +496,7 @@ test.describe('歌枠での記録', () => {
     test('曲ごとの回数と、シートの最終歌唱日と比べて新しいほうの日付を出す', async ({ page }) => {
         const calls = await openWithHistory(page);
         expect(calls).toEqual(['nina']);
-        await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲', 'アーティスト', 'カテゴリ', '歌枠での記録', '最後に歌った歌枠']);
+        await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲', 'アーティスト', 'カテゴリ', '歌った回数', '最後に歌った日']);
         expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
         expect(await cells(page, 'count')).toEqual(['3 回', '1 回', '', '1 回']);
         // 青い空は日本時間の 11/11 0:30 の配信。黄色い花と白い雲はシートの日付
@@ -516,9 +516,9 @@ test.describe('歌枠での記録', () => {
         expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
 
         // 見出しで並べ替えると、合う選択肢に合わせる。回数は 2 回目で少ない順になり、記録の無い曲は下のまま
-        await page.locator('.dataTables_scrollHead th', { hasText: '歌枠での記録' }).click();
+        await page.locator('.dataTables_scrollHead th', { hasText: '歌った回数' }).click();
         await expect(page.locator('#sortOrder')).toHaveValue('count');
-        await page.locator('.dataTables_scrollHead th', { hasText: '歌枠での記録' }).click();
+        await page.locator('.dataTables_scrollHead th', { hasText: '歌った回数' }).click();
         expect(await visibleTitles(page)).toEqual(['黄色い花', 'Star Song', '青い空', '白い雲']);
         await expect(page.locator('#sortOrder')).toHaveValue('');
     });
@@ -530,7 +530,7 @@ test.describe('歌枠での記録', () => {
         const dialog = page.locator('#historyDialog');
         await expect(dialog).toBeVisible();
         await expect(page.locator('#historyDialogTitle')).toHaveText('青い空');
-        await expect(page.locator('#historyDialogSummary')).toHaveText('歌枠での記録 3 回・最後に歌った歌枠 2026/11/11');
+        await expect(page.locator('#historyDialogSummary')).toHaveText('歌った回数 3 回・最後に歌った日 2026/11/11');
         const links = dialog.locator('#historyDialogList a');
         // 配信のタイトルは HTML として解釈しない。位置は time が正のときだけ付ける
         await expect(links).toHaveText(['<i>歌枠 その3</i>', '歌枠 その2', '歌枠 その1']);
