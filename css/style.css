@@ -1182,3 +1182,15 @@ table.dataTable tbody td.dataTables_empty {
     flex: 0 1 auto;
   }
 }
+
+/* 読み込み中(DataTables で表を作る前)も、作った後と同じ見出しを出す。
+   検索と並べ替えだけに使う列(4〜7 列目)は出さず、スマートフォンの幅では「楽曲」だけにする */
+#grid:not(.dataTable) thead th:nth-child(n+4):nth-child(-n+7) {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  #grid:not(.dataTable) thead th:not(:first-child) {
+    display: none;
+  }
+}

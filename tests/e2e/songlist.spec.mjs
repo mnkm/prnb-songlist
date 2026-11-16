@@ -457,6 +457,14 @@ test.describe('キーボード', () => {
 test.describe('スマートフォンの幅', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
+    test('読み込み中も、表の見出しは「楽曲」だけを出す', async ({ page }) => {
+        // 楽曲データが届かないままにして、表を作る前の見出しを見る
+        await page.route('https://script.google.com/**', () => {});
+        await page.goto('/');
+        const headers = page.locator('#grid thead th:visible');
+        await expect(headers).toHaveText(['楽曲']);
+    });
+
     test('アーティストとカテゴリを曲名の下に出し、絞り込みの欄を閉じた状態で開く', async ({ page }) => {
         await mockGas(page);
         await openPage(page);
