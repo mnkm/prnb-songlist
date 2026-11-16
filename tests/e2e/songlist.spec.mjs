@@ -649,8 +649,8 @@ test.describe('歌枠での記録', () => {
             await openWithHistory(page);
             await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
             const rows = page.locator('#grid tbody tr');
-            await expect(rows.nth(0).locator('.history-button')).toHaveText('歌枠 3 回・最後 2026/11/11');
-            await expect(rows.nth(1).locator('.history-button')).toHaveText('歌枠 1 回・最後 2026/12/01(シート)');
+            await expect(rows.nth(0).locator('.history-button')).toHaveText('歌唱 3 回・最終 2026/11/11');
+            await expect(rows.nth(1).locator('.history-button')).toHaveText('歌唱 1 回・最終 2026/12/01(シート)');
             await expect(rows.nth(2).locator('.song-sub-history')).toHaveText('最後に歌った日 2026/10/01(シート)');
             await page.locator('#sortOrder').selectOption('count');
             expect(await rows.locator('td:first-child .song-sub').count()).toBeGreaterThan(0);

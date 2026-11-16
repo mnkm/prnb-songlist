@@ -523,9 +523,9 @@ $(function () {
         const latest = row.latest;
         let history = '';
         if (record) {
-            const parts = [record.count ? `歌枠 ${record.count} 回` : '歌枠の記録: 同名の曲と区別できません'];
+            const parts = [record.count ? `歌唱 ${record.count} 回` : '歌枠の記録: 同名の曲と区別できません'];
             if (latest) {
-                parts.push(`最後 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
+                parts.push(`最終 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
             }
             history = `<span class="song-sub song-sub-history">${historyButton(row, parts.join('・'))}</span>`;
         } else if (latest) {
