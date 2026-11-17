@@ -191,4 +191,7 @@ test('シートの最終歌唱日と歌枠での記録の、新しいほうを�
     assert.equal(H.latestSung('未定', { count: 0, lastAt: null }), null);
     assert.equal(H.parseSheetDate('2026/02/30'), null);
     assert.equal(H.formatDate(H.parseSheetDate('2026-1-31')), '2026/01/31');
+    // シートの書き方(西暦の下 2 桁)
+    assert.equal(H.formatDate(H.parseSheetDate('24.12/13')), '2024/12/13');
+    assert.equal(H.parseSheetDate('25.02/30'), null);
 });

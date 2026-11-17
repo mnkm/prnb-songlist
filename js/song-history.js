@@ -108,9 +108,13 @@
 
     // シートの「最終歌唱日」(2026/01/31、2026-1-31 など)を、日本時間のその日の 0 時(ミリ秒)にする。読めなければ null
     function parseSheetDate(text) {
-        const m = /^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})$/.exec(normalize(text));
+        // シートは「24.12/13」のように西暦の下 2 桁で書いている。2000 年代として読む
+        const m = /^(\d{4}|\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})$/.exec(normalize(text));
         if (!m) {
             return null;
+        }
+        if (m[1].length === 2) {
+            m[1] = `20${m[1]}`;
         }
         const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) - JST_OFFSET;
         return formatDate(ms) === `${m[1]}/${m[2].padStart(2, '0')}/${m[3].padStart(2, '0')}` ? ms : null;
