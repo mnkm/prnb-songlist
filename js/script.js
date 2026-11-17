@@ -535,11 +535,11 @@ $(function () {
         if (record) {
             const parts = [record.count ? `歌唱 ${record.count} 回` : '区別できません'];
             if (latest) {
-                parts.push(`最終 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
+                parts.push(`最終 ${SongHistory.formatDate(latest.at)}`);
             }
             history = historyButton(row, parts.join('・'));
         } else if (latest) {
-            history = `<span class="song-sub-last">最終 ${escapeText(SongHistory.formatDate(latest.at))}(シート)</span>`;
+            history = `<span class="song-sub-last">最終 ${escapeText(SongHistory.formatDate(latest.at))}</span>`;
         }
         const sub = artist || category || history ? `<span class="song-sub">${artist}${category}${history}</span>` : '';
         return title + sub;
@@ -569,7 +569,7 @@ $(function () {
         return historyButton(row, record.count ? `${record.count} 回` : '区別できません');
     }
 
-    // シートの「最終歌唱日」と歌枠での記録の、新しいほうの日付。シートの日付には「シート」と添える
+    // シートの「最終歌唱日」と歌枠での記録の、新しいほうの日付。どちらの日付かは書き分けない
     function renderLast(data, type, row) {
         const latest = row.latest;
         if (type === 'sort') {
@@ -578,11 +578,7 @@ $(function () {
         if (!latest) {
             return '';
         }
-        const date = SongHistory.formatDate(latest.at);
-        if (type !== 'display') {
-            return date;
-        }
-        return latest.source === 'sheet' ? `${date}<span class="history-source">シート</span>` : date;
+        return SongHistory.formatDate(latest.at);
     }
 
     // 並べ替えの値は [値, 読み]。値が無い曲は向きにかかわらず下にし、同じ値の曲は読みの五十音順にする
@@ -783,13 +779,10 @@ $(function () {
             return;
         }
         $('#historyDialogTitle').text(row.title);
-        const sheetDate = SongHistory.parseSheetDate(row.lastSung);
+        // 最後に歌った日は、一覧と同じく、シートの最終歌唱日と歌枠での記録の新しいほう
         $('#historyDialogSummary').text(record.count
-            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(record.lastAt)}`
+            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(row.latest ? row.latest.at : record.lastAt)}`
             : '歌枠での記録はありますが、同名の曲と区別できないため数えていません。');
-        $('#historyDialogSheet')
-            .text(sheetDate != null ? `シートの最終歌唱日: ${SongHistory.formatDate(sheetDate)}` : '')
-            .prop('hidden', sheetDate == null);
         $('#historyDialogAmbiguous')
             .text(record.ambiguous ? `ほかに、同名の曲と区別できなかった回が ${record.ambiguous} 回あります(数に入れていません)。` : '')
             .prop('hidden', !record.ambiguous);

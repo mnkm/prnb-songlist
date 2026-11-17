@@ -522,7 +522,7 @@ test.describe('歌枠での記録', () => {
         expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
         expect(await cells(page, 'count')).toEqual(['3 回', '1 回', '', '1 回']);
         // 青い空は日本時間の 11/11 0:30 の配信。黄色い花と白い雲はシートの日付
-        expect(await cells(page, 'last')).toEqual(['2026/11/11', '2026/12/01シート', '2026/10/01シート', '2026/11/01']);
+        expect(await cells(page, 'last')).toEqual(['2026/11/11', '2026/12/01', '2026/10/01', '2026/11/01']);
         await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録: 2026/01/01 以降の YouTube の歌枠から(2026/11/15 12:00 時点)');
     });
 
@@ -577,7 +577,8 @@ test.describe('歌枠での記録', () => {
         await page.locator('#grid tbody tr').nth(1).locator('.history-button').focus();
         await page.keyboard.press('Enter');
         await expect(page.locator('#historyDialogTitle')).toHaveText('黄色い花');
-        await expect(page.locator('#historyDialogSheet')).toHaveText('シートの最終歌唱日: 2026/12/01');
+        // 最後に歌った日は一覧と同じ(シートの日付のほうが新しい)。シートの表記は出さない
+        await expect(page.locator('#historyDialogSummary')).toHaveText('歌った回数 1 回・最後に歌った日 2026/12/01');
         await page.keyboard.press('Escape');
         await expect(dialog).toBeHidden();
         await expect(page.locator('#toast')).not.toHaveClass(/is-visible/);
@@ -600,7 +601,7 @@ test.describe('歌枠での記録', () => {
             await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録を読み込めませんでした');
             expect(await cells(page, 'count')).toEqual(['', '', '', '']);
             // シートの日付だけは出す
-            expect(await cells(page, 'last')).toEqual(['', '2026/12/01シート', '2026/10/01シート', '']);
+            expect(await cells(page, 'last')).toEqual(['', '2026/12/01', '2026/10/01', '']);
         });
     }
 
@@ -680,8 +681,8 @@ test.describe('歌枠での記録', () => {
             const rows = page.locator('#grid tbody tr');
             // 回数はアーティストと同じ 2 行目に置く(行を低くするため)
             await expect(rows.nth(0).locator('.song-sub .history-button')).toHaveText('歌唱 3 回・最終 2026/11/11');
-            await expect(rows.nth(1).locator('.song-sub .history-button')).toHaveText('歌唱 1 回・最終 2026/12/01(シート)');
-            await expect(rows.nth(2).locator('.song-sub .song-sub-last')).toHaveText('最終 2026/10/01(シート)');
+            await expect(rows.nth(1).locator('.song-sub .history-button')).toHaveText('歌唱 1 回・最終 2026/12/01');
+            await expect(rows.nth(2).locator('.song-sub .song-sub-last')).toHaveText('最終 2026/10/01');
             const [artistBox, buttonBox] = await Promise.all([
                 rows.nth(0).locator('.song-sub-artist').boundingBox(),
                 rows.nth(0).locator('.history-button').boundingBox()
