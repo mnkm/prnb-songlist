@@ -1,7 +1,7 @@
 // 楽曲リストの画面の、今の動作を確かめるテスト
 import { test, expect } from '@playwright/test';
-import { SONGS, manySongs } from './fixtures.mjs';
-import { mockGas, blockExternal, openPage, visibleTitles, selectTalent, expectTalent } from './helpers.mjs';
+import { SONGS, manySongs, HISTORY, HISTORY_SONGS } from './fixtures.mjs';
+import { mockGas, mockHistory, blockExternal, openPage, visibleTitles, selectTalent, expectTalent } from './helpers.mjs';
 
 // テストが待っていないダイアログ(DataTables の警告など)。Playwright は黙って閉じるので、記録して失敗にする
 let unexpectedDialogs = [];
@@ -9,6 +9,8 @@ let unexpectedDialogs = [];
 test.beforeEach(async ({ page }) => {
     unexpectedDialogs = [];
     await blockExternal(page);
+    // 歌枠での記録は、既定では「まだ無い」を返す(テストごとに上書きできる)
+    await mockHistory(page);
     // スクリプトのエラーが起きたらテストを失敗させる
     page.on('pageerror', error => {
         throw error;
@@ -455,6 +457,14 @@ test.describe('キーボード', () => {
 test.describe('スマートフォンの幅', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
+    test('読み込み中も、表の見出しは「楽曲」だけを出す', async ({ page }) => {
+        // 楽曲データが届かないままにして、表を作る前の見出しを見る
+        await page.route('https://script.google.com/**', () => {});
+        await page.goto('/');
+        const headers = page.locator('#grid thead th:visible');
+        await expect(headers).toHaveText(['楽曲']);
+    });
+
     test('アーティストとカテゴリを曲名の下に出し、絞り込みの欄を閉じた状態で開く', async ({ page }) => {
         await mockGas(page);
         await openPage(page);
@@ -476,5 +486,235 @@ test.describe('スマートフォンの幅', () => {
 
         await page.locator('#filterToggle').click();
         await expect(page.locator('#categoryFilter')).toBeVisible();
+    });
+
+    test('絞り込みを設定しても、検索欄は入力できる幅を保ち、「条件をクリア」は次の行に出す', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 740 });
+        await mockGas(page);
+        await openPage(page, 'talent=hinata&type=request');
+
+        await expect(page.locator('#clearFiltersButton')).toBeVisible();
+        const search = await page.locator('#textFilter').boundingBox();
+        const toggle = await page.locator('#filterToggle').boundingBox();
+        const clear = await page.locator('#clearFiltersButton').boundingBox();
+        expect(search.width).toBeGreaterThan(120);
+        expect(search.x + search.width).toBeLessThanOrEqual(toggle.x);
+        expect(clear.y).toBeGreaterThanOrEqual(toggle.y + toggle.height);
+    });
+});
+
+test.describe('歌枠での記録', () => {
+    async function openWithHistory(page, handler) {
+        await mockGas(page, talent => ({ rows: talent === 'nina' ? HISTORY_SONGS.nina : SONGS[talent] }));
+        const calls = await mockHistory(page, handler || (talent => HISTORY[talent] || { songs: [], streams: {}, updatedAt: '2026-11-15T03:00:00Z' }));
+        await openPage(page);
+        return calls;
+    }
+
+    function cells(page, column) {
+        return page.locator(`#grid tbody tr td.history-${column}`).allTextContents();
+    }
+
+    test('曲ごとの回数と、シートの最終歌唱日と比べて新しいほうの日付を出す', async ({ page }) => {
+        const calls = await openWithHistory(page);
+        expect(calls).toEqual(['nina']);
+        await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲', 'アーティスト', 'カテゴリ', '歌った回数', '最後に歌った日']);
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
+        expect(await cells(page, 'count')).toEqual(['3 回', '1 回', '', '1 回']);
+        // 青い空は日本時間の 11/11 0:30 の配信。黄色い花と白い雲はシートの日付
+        expect(await cells(page, 'last')).toEqual(['2026/11/11', '2026/12/01シート', '2026/10/01シート', '2026/11/01']);
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録: 2026/01/01 以降の YouTube の歌枠から(2026/11/15 12:00 時点)');
+    });
+
+    test('並び順の欄で、回数・最後に歌った日の順に並べ、記録の無い曲は下にする', async ({ page }) => {
+        await openWithHistory(page);
+        await page.locator('#sortOrder').selectOption('count');
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', 'Star Song', '白い雲']);
+        // 少ない順でも、記録の無い曲は下にする
+        await page.locator('#sortOrder').selectOption('fewest');
+        expect(await visibleTitles(page)).toEqual(['黄色い花', 'Star Song', '青い空', '白い雲']);
+        await page.locator('#sortOrder').selectOption('recent');
+        expect(await visibleTitles(page)).toEqual(['黄色い花', '青い空', 'Star Song', '白い雲']);
+        await page.locator('#sortOrder').selectOption('oldest');
+        expect(await visibleTitles(page)).toEqual(['白い雲', 'Star Song', '青い空', '黄色い花']);
+        await page.locator('#sortOrder').selectOption('reading');
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
+
+        // 見出しで並べ替えると、合う選択肢に合わせる。回数は 2 回目で少ない順になり、記録の無い曲は下のまま
+        await page.locator('.dataTables_scrollHead th', { hasText: '歌った回数' }).click();
+        await expect(page.locator('#sortOrder')).toHaveValue('count');
+        await page.locator('.dataTables_scrollHead th', { hasText: '歌った回数' }).click();
+        expect(await visibleTitles(page)).toEqual(['黄色い花', 'Star Song', '青い空', '白い雲']);
+        await expect(page.locator('#sortOrder')).toHaveValue('fewest');
+        // 選択肢に無い並び(曲名の逆順)では、欄を空にする
+        await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
+        await page.locator('.dataTables_scrollHead th', { hasText: '楽曲' }).click();
+        await expect(page.locator('#sortOrder')).toHaveValue('');
+    });
+
+    test('回数のボタンで歌った配信の一覧を開き、行のコピーはしない', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await openWithHistory(page);
+        await page.locator('#grid tbody tr').first().locator('.history-button').click();
+        const dialog = page.locator('#historyDialog');
+        await expect(dialog).toBeVisible();
+        await expect(page.locator('#historyDialogTitle')).toHaveText('青い空');
+        await expect(page.locator('#historyDialogSummary')).toHaveText('歌った回数 3 回・最後に歌った日 2026/11/11');
+        const links = dialog.locator('#historyDialogList a');
+        // 配信のタイトルは HTML として解釈しない。位置は time が正のときだけ付ける
+        await expect(links).toHaveText(['<i>歌枠 その3</i>', '歌枠 その2', '歌枠 その1']);
+        expect(await links.evaluateAll(as => as.map(a => a.getAttribute('href')))).toEqual([
+            'https://www.youtube.com/watch?v=video000003&t=754s',
+            'https://www.youtube.com/watch?v=video000002',
+            'https://www.youtube.com/watch?v=video000001'
+        ]);
+        await expect(dialog.locator('.history-date')).toHaveText(['2026/11/11', '2026/11/01', '2026/01/01']);
+        await expect(page.locator('#toast')).not.toHaveClass(/is-visible/);
+        await page.locator('#historyDialogClose').click();
+        await expect(dialog).toBeHidden();
+
+        // キーボード: ボタンで Enter を押すと一覧を開き、コピーしない。Esc で閉じる
+        await page.locator('#grid tbody tr').nth(1).locator('.history-button').focus();
+        await page.keyboard.press('Enter');
+        await expect(page.locator('#historyDialogTitle')).toHaveText('黄色い花');
+        await expect(page.locator('#historyDialogSheet')).toHaveText('シートの最終歌唱日: 2026/12/01');
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(page.locator('#toast')).not.toHaveClass(/is-visible/);
+
+        // ボタンの外を押せば、今までどおりコピーする
+        await page.locator('#grid tbody tr').first().locator('td').first().click();
+        await expect(page.locator('#toast')).toHaveText('コピーしました: 青い空 / アーティストA');
+    });
+
+    test('キーワード検索は回数や日付に当たらない', async ({ page }) => {
+        await openWithHistory(page);
+        await page.locator('#textFilter').fill('2026');
+        expect(await visibleTitles(page)).toEqual(['一致する楽曲はありません']);
+    });
+
+    for (const [name, handler] of [['HTTP のエラー', () => ({ status: 500 })], ['通信の失敗', () => 'abort'], ['形の違う応答', () => ({ foo: 1 })]]) {
+        test(`記録を読めないとき(${name})も、一覧はそのまま出す`, async ({ page }) => {
+            await openWithHistory(page, handler);
+            expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
+            await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録を読み込めませんでした');
+            expect(await cells(page, 'count')).toEqual(['', '', '', '']);
+            // シートの日付だけは出す
+            expect(await cells(page, 'last')).toEqual(['', '2026/12/01シート', '2026/10/01シート', '']);
+        });
+    }
+
+    test('記録がまだ無いタレントは、その旨を出す', async ({ page }) => {
+        await openWithHistory(page);
+        await selectTalent(page, 'ren');
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録: まだありません');
+        expect(await cells(page, 'count')).toEqual(['', '']);
+    });
+
+    test('記録が楽曲より遅く届いても、そろってから 1 回で描く', async ({ page }) => {
+        await openWithHistory(page, async talent => {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            return HISTORY[talent];
+        });
+        expect(await cells(page, 'count')).toEqual(['3 回', '1 回', '', '1 回']);
+    });
+
+    test('記録が遅いときは一覧を先に出し、届いたら記録を足す', async ({ page }) => {
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await openWithHistory(page, async talent => {
+            await gate;
+            return HISTORY[talent];
+        });
+        expect(await visibleTitles(page)).toEqual(['青い空', '黄色い花', '白い雲', 'Star Song']);
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録を読み込み中です');
+        expect(await cells(page, 'count')).toEqual(['', '', '', '']);
+        release();
+        await expect(page.locator('#grid tbody tr td.history-count')).toHaveText(['3 回', '1 回', '', '1 回']);
+        await expect(page.locator('#historyStatus')).toHaveText(/^歌枠での記録: 2026\/01\/01 以降/);
+    });
+
+    test('記録を待つあいだに切り替えたら、前のタレントの記録は足さない', async ({ page }) => {
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await openWithHistory(page, async talent => {
+            if (talent === 'nina') {
+                await gate;
+            }
+            return HISTORY[talent] || { songs: [], streams: {}, updatedAt: '2026-11-15T03:00:00Z' };
+        });
+        await selectTalent(page, 'ren');
+        release();
+        await page.waitForTimeout(300);
+        expect(await visibleTitles(page)).toEqual(['赤い実', '緑の葉']);
+        await expect(page.locator('#historyStatus')).toHaveText('歌枠での記録: まだありません');
+    });
+
+    test('一覧を閉じるとボタンにフォーカスを戻し、背景を押しても閉じる', async ({ page }) => {
+        await openWithHistory(page);
+        const button = page.locator('#grid tbody tr').first().locator('.history-button');
+        await expect(button).toHaveAttribute('aria-label', '青い空の歌枠での記録を開く(3 回)');
+        await button.click();
+        await page.locator('#historyDialogClose').click();
+        await expect(button).toBeFocused();
+        await button.click();
+        await expect(page.locator('#historyDialog')).toBeVisible();
+        await page.mouse.click(5, 5);
+        await expect(page.locator('#historyDialog')).toBeHidden();
+    });
+
+    test('楽曲の読み込みに失敗したときは、記録が読めても失敗を知らせる', async ({ page }) => {
+        await mockGas(page, () => ({ error: 'internal_error' }));
+        await mockHistory(page, talent => HISTORY[talent]);
+        await openPage(page);
+        await expect(page.locator('#loadError')).toBeVisible();
+        await expect(page.locator('#historyStatus')).toHaveText('');
+    });
+
+    test.describe('スマートフォンの幅', () => {
+        test.use({ viewport: { width: 390, height: 844 } });
+
+        test('列を足さず、曲名の 2 行目に回数と最後の日を出し、並び順を選べる', async ({ page }) => {
+            await openWithHistory(page);
+            await expect(page.locator('.dataTables_scrollHead th')).toHaveText(['楽曲']);
+            const rows = page.locator('#grid tbody tr');
+            // 回数はアーティストと同じ 2 行目に置く(行を低くするため)
+            await expect(rows.nth(0).locator('.song-sub .history-button')).toHaveText('歌唱 3 回・最終 2026/11/11');
+            await expect(rows.nth(1).locator('.song-sub .history-button')).toHaveText('歌唱 1 回・最終 2026/12/01(シート)');
+            await expect(rows.nth(2).locator('.song-sub .song-sub-last')).toHaveText('最終 2026/10/01(シート)');
+            const [artistBox, buttonBox] = await Promise.all([
+                rows.nth(0).locator('.song-sub-artist').boundingBox(),
+                rows.nth(0).locator('.history-button').boundingBox()
+            ]);
+            expect(Math.abs(artistBox.y + artistBox.height / 2 - (buttonBox.y + buttonBox.height / 2))).toBeLessThan(4);
+
+            // 曲数・並び順・表示件数は 1 行に並べ、表示件数は選択欄で選ぶ
+            await expect(page.locator('.copy-hint')).toBeHidden();
+            await expect(page.locator('.page-length-button').first()).toBeHidden();
+            const tops = await page.locator('#songCount, #sortOrder, #pageLengthSelect').evaluateAll(els => els.map(e => {
+                const r = e.getBoundingClientRect();
+                return Math.round(r.top + r.height / 2);
+            }));
+            expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(4);
+            await page.locator('#pageLengthSelect').selectOption('25');
+            await expect(page.locator('#pageLengthSelect')).toHaveValue('25');
+            await expect(page.locator('.page-length-button[data-page-length="25"]')).toHaveAttribute('aria-pressed', 'true');
+
+            // 検索欄と「絞り込み」も 1 行に並べる
+            const [searchBox, toggleBox] = await Promise.all([
+                page.locator('#textFilter').boundingBox(),
+                page.locator('#filterToggle').boundingBox()
+            ]);
+            expect(Math.abs(searchBox.y - toggleBox.y)).toBeLessThan(4);
+
+            // 長いアーティスト名でも、表が横にはみ出さない
+            const overflow = await page.locator('.dataTables_scrollBody').evaluate(el => el.scrollWidth - el.clientWidth);
+            expect(overflow).toBeLessThanOrEqual(0);
+
+            await page.locator('#sortOrder').selectOption('count');
+            expect(await rows.locator('td:first-child .song-sub').count()).toBeGreaterThan(0);
+            await rows.nth(0).locator('.history-button').click();
+            await expect(page.locator('#historyDialog')).toBeVisible();
+        });
     });
 });

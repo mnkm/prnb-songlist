@@ -72,6 +72,19 @@ function getLargeCache(cache, key) {
 }
 
 /**
+ * シートの日付を「2026/01/31」の形の文字列にする(日付のセルは Date で読めるので、日本時間で書き直す)。
+ * 文字で書かれた日付はそのまま返し、空のセルは空の文字列にする
+ */
+function formatSheetDate(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    return isNaN(value.getTime())
+      ? ''
+      : Utilities.formatDate(value, 'Asia/Tokyo', 'yyyy/MM/dd');
+  }
+  return value == null ? '' : String(value).trim();
+}
+
+/**
  * JSON の文字列をレスポンスにする
  */
 function createJsonTextResponse(json) {
@@ -196,7 +209,8 @@ function getSongList(e) {
     "アーティスト": "artist",
     "カテゴリ": "category",
     "ジャンル": "genre",
-    "種類": "type"
+    "種類": "type",
+    "最終歌唱日": "lastSung"
   };
 
   const header = values.shift();
@@ -208,7 +222,9 @@ function getSongList(e) {
     .map((row, index) => {
       const obj = {};
       keys.forEach((k, i) => {
-        if (k) {
+        if (k === 'lastSung') {
+          obj[k] = formatSheetDate(row[i]);
+        } else if (k) {
           obj[k] = row[i];
         }
       });

@@ -324,6 +324,10 @@ a {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  /* 表の欄ははみ出した分を切るので、中の操作部品のフォーカスの枠(外側 4px)が切れないよう、
+     余白を取り、同じ幅だけ外へ広げて位置を変えない */
+  padding: 4px;
+  margin: -4px;
   display: flex;
   flex-direction: column;
 }
@@ -481,7 +485,10 @@ table.dataTable tbody td.dataTables_empty {
 }
 
 .song-sub-category {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 0 6px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -944,5 +951,255 @@ table.dataTable tbody td.dataTables_empty {
   .dataTables_wrapper .dataTables_paginate {
     text-align: center;
     margin-top: 8px;
+  }
+}
+
+/* 歌枠での記録 */
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-control label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-text-color);
+  white-space: nowrap;
+}
+
+.sort-control select {
+  width: auto;
+  background-color: var(--input-background);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.history-status {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-text-color);
+}
+
+.history-status:empty {
+  display: none;
+}
+
+.history-status.is-error {
+  color: var(--heading-text-color);
+}
+
+.history-button {
+  padding: 0 8px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.history-button:hover {
+  background: var(--accent-color);
+}
+
+.history-source {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted-text-color);
+}
+
+#grid td.history-count,
+#grid td.history-last {
+  white-space: nowrap;
+}
+
+.history-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-background);
+  color: var(--text-color);
+}
+
+.history-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.history-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-dialog-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--heading-text-color);
+  overflow-wrap: anywhere;
+}
+
+.history-dialog-summary {
+  margin-bottom: 8px;
+}
+
+.history-dialog-note {
+  font-size: 12px;
+  color: var(--muted-text-color);
+}
+
+.history-dialog-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.history-dialog-list li {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.history-dialog-list a {
+  min-width: 0;
+  color: var(--link-color);
+  overflow-wrap: anywhere;
+}
+
+.history-date {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--muted-text-color);
+}
+
+/* 2 行目の右端に置く、歌った回数のボタンとシートの日付 */
+.song-sub .history-button,
+.song-sub-last {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* PC の幅: 左に曲数、右に表の見せ方(並び順・表示件数)をまとめる。
+   並び順の欄は、表示件数のボタンや絞り込みの選択欄と同じ大きさにする */
+@media (min-width: 768px) {
+  .table-toolbar {
+    gap: 8px 32px;
+  }
+
+  .table-status {
+    flex: 1 1 auto;
+  }
+
+  .sort-control select {
+    height: 34px;
+    font-size: 14px;
+  }
+}
+
+/* 表示件数の選択欄は、スマートフォンの幅だけで出す */
+.page-length-select {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* 狭い画面では表を広く使うため、集計の期間は出さず、読めなかったときだけ出す */
+  .history-status:not(.is-error) {
+    display: none;
+  }
+}
+
+/* スマートフォンの幅: 表に見える曲を増やすため、操作欄を詰める */
+@media (max-width: 767px) {
+  /* 検索欄と「絞り込み」を 1 行にする */
+  .search-box {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 「条件をクリア」は次の行の右端に出し、検索欄の幅を削らない */
+  .clear-filters {
+    flex: 0 0 100%;
+    text-align: right;
+  }
+
+  /* 曲数・並び順・表示件数を 1 行にする。説明の文は出さない(押すとコピーのお知らせが出る) */
+  .table-toolbar {
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .copy-hint {
+    display: none;
+  }
+
+  .sort-control {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 「並び順」の文字は画面には出さず、読み上げにだけ使う */
+  .sort-control label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .sort-control select,
+  .page-length-select {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .sort-control select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .page-length-label,
+  .page-length-button {
+    display: none;
+  }
+
+  .page-length-select {
+    display: block;
+    width: auto;
+    background-color: var(--input-background);
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+
+  /* 長いアーティスト名で表が横にはみ出さないよう、列の幅を表の幅に合わせる */
+  #grid {
+    table-layout: fixed;
+  }
+
+  .song-sub-artist {
+    flex: 0 1 auto;
+  }
+}
+
+/* 読み込み中(DataTables で表を作る前)も、作った後と同じ見出しを出す。
+   検索と並べ替えだけに使う列(4〜7 列目)は出さず、スマートフォンの幅では「楽曲」だけにする */
+#grid:not(.dataTable) thead th:nth-child(n+4):nth-child(-n+7) {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  #grid:not(.dataTable) thead th:not(:first-child) {
+    display: none;
   }
 }

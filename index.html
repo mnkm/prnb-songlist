@@ -202,13 +202,32 @@
                     <span id="songCount" class="song-count"></span>
                     <span class="copy-hint">曲を押すとコピーします</span>
                 </p>
+                <div class="sort-control">
+                    <label for="sortOrder">並び順</label>
+                    <select id="sortOrder" class="form-control input-sm">
+                        <option value="reading">五十音順</option>
+                        <option value="count">歌った回数が多い順</option>
+                        <option value="fewest">歌った回数が少ない順</option>
+                        <option value="recent">歌った日が新しい順</option>
+                        <option value="oldest">歌った日が古い順</option>
+                        <option value="" hidden>—</option>
+                    </select>
+                </div>
                 <div class="page-length-controls" role="group" aria-label="1ページの表示件数">
                     <span class="page-length-label"><span class="page-length-label-long">1ページの</span>表示件数</span>
                     <button type="button" class="btn btn-default page-length-button active" data-page-length="10" aria-pressed="true">10</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="25" aria-pressed="false">25</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="50" aria-pressed="false">50</button>
                     <button type="button" class="btn btn-default page-length-button" data-page-length="100" aria-pressed="false">100</button>
+                    <!-- スマートフォンの幅では、ボタンの代わりにこちらを出す(ツールバーを 1 行に収めるため) -->
+                    <select id="pageLengthSelect" class="form-control page-length-select" aria-label="1ページの表示件数">
+                        <option value="10">10 件</option>
+                        <option value="25">25 件</option>
+                        <option value="50">50 件</option>
+                        <option value="100">100 件</option>
+                    </select>
                 </div>
+                <p id="historyStatus" class="history-status"></p>
             </div>
             <div id="loadError" class="load-error" role="alert" hidden>
                 <p>データを読み込めませんでした。</p>
@@ -220,6 +239,13 @@
                         <th>楽曲</th>
                         <th>アーティスト</th>
                         <th>カテゴリ</th>
+                        <!-- 検索と並べ替えだけに使う列(表示しない) -->
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>歌った回数</th>
+                        <th>最後に歌った日</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -243,6 +269,21 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
+    <!-- 歌った配信の一覧(歌枠での記録のボタンで開く) -->
+    <dialog id="historyDialog" class="history-dialog" aria-labelledby="historyDialogTitle">
+        <div class="history-dialog-header">
+            <h2 id="historyDialogTitle" class="history-dialog-title"></h2>
+            <button type="button" id="historyDialogClose" class="menu-close-button" aria-label="閉じる">×</button>
+        </div>
+        <p id="historyDialogSummary" class="history-dialog-summary"></p>
+        <p id="historyDialogSheet" class="history-dialog-note" hidden></p>
+        <p id="historyDialogAmbiguous" class="history-dialog-note" hidden></p>
+        <ul id="historyDialogList" class="history-dialog-list"></ul>
+        <p class="history-dialog-note">セトリは配信のコメント欄から集めたものです。コラボ配信では、相手が歌った曲も入ります。</p>
+    </dialog>
+
+    <script src="js/song-aliases.js"></script>
+    <script src="js/song-history.js"></script>
     <script src="js/script.js"></script>
 </body>
 

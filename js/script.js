@@ -3,6 +3,12 @@ $(function () {
     const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx61e698leQlyLWXTTND-YgOTfV2lNB1YBKLgtJfBAmUOL2XTq1A3uW2AnSIck0WCm-5Q/exec';
     // GAS が応答しないときに、読み込みをあきらめるまでの時間(ミリ秒)
     const LOAD_TIMEOUT = 20000;
+    // 歌枠での記録(配信カレンダーの API、同じオリジン)。読めなくても一覧は出すので、待つ時間は短くする
+    const HISTORY_ENDPOINT = '/prnb-stream-calendar/api/song-history';
+    const HISTORY_TIMEOUT = 8000;
+    // 楽曲が届いたあと、記録を待つ時間。過ぎたら一覧を先に出し、記録は届いたときに足す
+    const HISTORY_WAIT = 1500;
+    const SongHistory = window.SongHistory;
 
     // タレントの色。soft は背景の塗り、strong は枠線・下線・選択中の印に使う(白地・黒地で読める濃さ)
     const TALENT_COLORS = {
@@ -213,7 +219,7 @@ $(function () {
         // 狭い画面で絞り込みを開いても、表が数行は見えるようにする(はみ出した分は表の欄ごとスクロールする)
         const minHeight = mobileMediaQuery.matches ? 160 : 0;
         if (!wrapper.length) {
-            return Math.max(50, tableArea.innerHeight() - toolbarHeight - 100);
+            return Math.max(50, tableArea.height() - toolbarHeight - 100);
         }
 
         const scrollHeadHeight = wrapper.find('.dataTables_scrollHead').outerHeight(true) || 0;
@@ -221,7 +227,7 @@ $(function () {
         const pagerHeight = wrapper.find('.dataTables_paginate').outerHeight(true) || 0;
         const controlsHeight = toolbarHeight + scrollHeadHeight + infoHeight + pagerHeight;
 
-        return Math.max(minHeight, tableArea.innerHeight() - controlsHeight);
+        return Math.max(minHeight, tableArea.height() - controlsHeight);
     }
 
     function showLoading() {
@@ -261,6 +267,7 @@ $(function () {
                 .toggleClass('active', isActive)
                 .attr('aria-pressed', isActive ? 'true' : 'false');
         });
+        $('#pageLengthSelect').val(String(pageLength));
     }
 
     $('.page-length-button').on('click', function () {
@@ -269,6 +276,15 @@ $(function () {
         }
 
         table.page.len(Number($(this).data('page-length'))).draw();
+        updatePageLengthButtons();
+    });
+
+    // スマートフォンの幅で出す、表示件数の選択欄
+    $('#pageLengthSelect').on('change', function () {
+        if (!table) {
+            return;
+        }
+        table.page.len(Number($(this).val())).draw();
         updatePageLengthButtons();
     });
 
@@ -290,7 +306,7 @@ $(function () {
     }
 
     // 楽曲データとして扱う項目。sortKey は並べ替え用に、読みをひらがなにそろえたもの
-    const ROW_FIELDS = ['title', 'artist', 'category', 'genre', 'type', 'reading'];
+    const ROW_FIELDS = ['title', 'artist', 'category', 'genre', 'type', 'reading', 'lastSung'];
     const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
 
     // フィルタの id・対応データ項目・DataTables列番号をここで一元管理する。
@@ -382,13 +398,21 @@ $(function () {
             });
     }
 
-    $('#grid').on('click', 'tbody tr', function () {
+    // 行の中のボタン(歌枠での記録)を押したときは、コピーしない
+    function isInsideControl(event) {
+        return $(event.target).closest('button, a').length > 0;
+    }
+
+    $('#grid').on('click', 'tbody tr', function (event) {
+        if (isInsideControl(event)) {
+            return;
+        }
         copyRow(this);
     });
 
     // 行にフォーカスがあるときは、Enter キーでもコピーする
     $('#grid').on('keydown', 'tbody tr', function (event) {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && !isInsideControl(event)) {
             event.preventDefault();
             copyRow(this);
         }
@@ -428,6 +452,8 @@ $(function () {
         const isMobile = mobileMediaQuery.matches;
         table.column(1).visible(!isMobile, false);
         table.column(2).visible(!isMobile, false);
+        table.column(COLUMN_COUNT).visible(!isMobile, false);
+        table.column(COLUMN_LAST).visible(!isMobile, false);
         table.rows().invalidate('data');
         table.draw(false);
         table.columns.adjust();
@@ -490,7 +516,8 @@ $(function () {
         return Object.assign({ data: data, render: $.fn.dataTable.render.text() }, options);
     }
 
-    // 曲名の列。スマートフォンの幅では、アーティストとカテゴリを 2 行目に出す
+    // 曲名の列。スマートフォンの幅では、アーティスト・カテゴリ・歌った回数を 2 行目に出す
+    // (行を低くして、表に見える曲を増やすため。回数は 2 行目の右端に置く)
     function renderTitle(data, type, row) {
         if (type !== 'display') {
             return data;
@@ -502,8 +529,77 @@ $(function () {
         // 区切りの記号はアーティスト名にも含まれることがあるので使わず、カテゴリは枠で囲んで分ける
         const artist = row.artist ? `<span class="song-sub-artist">${escapeText(row.artist)}</span>` : '';
         const category = row.category ? `<span class="song-sub-category">${escapeText(row.category)}</span>` : '';
-        return artist || category ? `${title}<span class="song-sub">${artist}${category}</span>` : title;
+        const record = row.history;
+        const latest = row.latest;
+        let history = '';
+        if (record) {
+            const parts = [record.count ? `歌唱 ${record.count} 回` : '区別できません'];
+            if (latest) {
+                parts.push(`最終 ${SongHistory.formatDate(latest.at)}${latest.source === 'sheet' ? '(シート)' : ''}`);
+            }
+            history = historyButton(row, parts.join('・'));
+        } else if (latest) {
+            history = `<span class="song-sub-last">最終 ${escapeText(SongHistory.formatDate(latest.at))}(シート)</span>`;
+        }
+        const sub = artist || category || history ? `<span class="song-sub">${artist}${category}${history}</span>` : '';
+        return title + sub;
     }
+
+    // 歌枠での記録の列(回数・最後に歌った歌枠)。並べ替えでは、記録の無い曲をいつも一番下にする
+    const COLUMN_COUNT = 7;
+    const COLUMN_LAST = 8;
+
+    // 回数のボタン。読み上げでは、どの曲のボタンか分かるよう曲名を付ける
+    function historyButton(row, label) {
+        const ariaLabel = `${row.title}の歌枠での記録を開く(${label})`;
+        return `<button type="button" class="history-button" data-row="${row.rowIndex}" aria-label="${escapeText(ariaLabel)}">${escapeText(label)}</button>`;
+    }
+
+    function renderCount(data, type, row) {
+        const record = row.history;
+        if (type === 'sort') {
+            return [record && record.count ? record.count : null, row.sortKey];
+        }
+        if (type !== 'display') {
+            return record ? String(record.count) : '';
+        }
+        if (!record) {
+            return '';
+        }
+        return historyButton(row, record.count ? `${record.count} 回` : '区別できません');
+    }
+
+    // シートの「最終歌唱日」と歌枠での記録の、新しいほうの日付。シートの日付には「シート」と添える
+    function renderLast(data, type, row) {
+        const latest = row.latest;
+        if (type === 'sort') {
+            return [latest ? latest.at : null, row.sortKey];
+        }
+        if (!latest) {
+            return '';
+        }
+        const date = SongHistory.formatDate(latest.at);
+        if (type !== 'display') {
+            return date;
+        }
+        return latest.source === 'sheet' ? `${date}<span class="history-source">シート</span>` : date;
+    }
+
+    // 並べ替えの値は [値, 読み]。値が無い曲は向きにかかわらず下にし、同じ値の曲は読みの五十音順にする
+    function compareHistory(a, b, direction) {
+        if (a[0] == null || b[0] == null) {
+            if (a[0] == null && b[0] == null) {
+                return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
+            }
+            return a[0] == null ? 1 : -1;
+        }
+        if (a[0] !== b[0]) {
+            return (a[0] < b[0] ? -1 : 1) * direction;
+        }
+        return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
+    }
+    $.fn.dataTable.ext.type.order['history-asc'] = (a, b) => compareHistory(a, b, 1);
+    $.fn.dataTable.ext.type.order['history-desc'] = (a, b) => compareHistory(a, b, -1);
 
     // 表の中身を rows に入れ替える(最初の 1 回は DataTable を作る)
     function showRows(rows) {
@@ -530,7 +626,11 @@ $(function () {
                     textColumn('reading', { visible: false, searchable: true }),
 
                     // 並べ替えだけに使う
-                    { data: 'sortKey', visible: false, searchable: false }
+                    { data: 'sortKey', visible: false, searchable: false },
+
+                    // 歌枠での記録。キーワード検索の対象にしない(「3」などで回数や日付に当たらないように)
+                    { data: null, title: '歌った回数', render: renderCount, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-count' },
+                    { data: null, title: '最後に歌った日', render: renderLast, type: 'history', searchable: false, orderSequence: ['desc', 'asc'], className: 'history-last' }
                 ],
 
                 // 行に Tab キーで移れるようにする
@@ -560,6 +660,7 @@ $(function () {
                 }
             });
             table.on('draw', updateSongCount);
+            table.on('order', syncSortSelect);
             updatePageLengthButtons();
         } else {
             table.clear();
@@ -588,12 +689,188 @@ $(function () {
     // 一度でも読み込みに成功したか
     let hasLoaded = false;
 
+    // 表示中のタレントの歌枠での記録。status は loading / ok / empty / error
+    let currentHistory = { status: 'loading', matched: null, rows: [] };
+
+    // 歌枠での記録を読む。失敗しても reject せず、{ status: 'error' } で返す
+    function fetchHistory(talent) {
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const timer = setTimeout(function () {
+            if (controller) {
+                controller.abort();
+            }
+        }, HISTORY_TIMEOUT);
+        const url = `${HISTORY_ENDPOINT}?talent=${encodeURIComponent(talent)}`;
+        return fetch(url, controller ? { signal: controller.signal } : {})
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                return data && Array.isArray(data.songs)
+                    ? { status: data.songs.length ? 'ok' : 'empty', data: data }
+                    : { status: 'error' };
+            })
+            .catch(function () {
+                return { status: 'error' };
+            })
+            .finally(function () {
+                clearTimeout(timer);
+            });
+    }
+
+    // 曲に歌枠での記録を付ける。突き合わせで例外が起きても、一覧は記録なしで出す
+    function attachHistory(rows, history) {
+        rows.forEach(function (row, index) {
+            row.rowIndex = index;
+            row.history = null;
+            row.latest = null;
+        });
+        const setLatest = function () {
+            rows.forEach(function (row) {
+                row.latest = SongHistory.latestSung(row.lastSung, row.history);
+            });
+        };
+        let matched = null;
+        let status = history.status;
+        try {
+            if (status === 'ok') {
+                matched = SongHistory.matchHistory(rows, history.data);
+                matched.records.forEach(function (record, index) {
+                    rows[index].history = record;
+                });
+            }
+            setLatest();
+        } catch (error) {
+            console.error('歌枠での記録を突き合わせられませんでした', error);
+            status = 'error';
+            matched = null;
+            rows.forEach(function (row) {
+                row.history = null;
+                row.latest = null;
+            });
+        }
+        currentHistory = { status: status, matched: matched, rows: rows };
+        updateHistoryStatus();
+    }
+
+    // 表の上の「歌枠での記録」の説明
+    function updateHistoryStatus() {
+        const status = currentHistory.status;
+        const matched = currentHistory.matched;
+        let text = '';
+        if (status === 'ok' && matched) {
+            const since = SongHistory.formatDate(matched.since);
+            const updated = SongHistory.formatDateTime(matched.updatedAt);
+            text = `歌枠での記録: ${since} 以降の YouTube の歌枠から${updated ? `(${updated} 時点)` : ''}`;
+        } else if (status === 'empty') {
+            text = '歌枠での記録: まだありません';
+        } else if (status === 'error') {
+            text = '歌枠での記録を読み込めませんでした';
+        } else if (status === 'loading' && currentHistory.rows.length) {
+            text = '歌枠での記録を読み込み中です';
+        }
+        $('#historyStatus').text(text).toggleClass('is-error', status === 'error');
+    }
+
+    // 歌った配信の一覧を出す
+    function openHistoryDialog(row) {
+        const record = row.history;
+        const dialog = document.getElementById('historyDialog');
+        if (!record || !dialog || typeof dialog.showModal !== 'function') {
+            return;
+        }
+        $('#historyDialogTitle').text(row.title);
+        const sheetDate = SongHistory.parseSheetDate(row.lastSung);
+        $('#historyDialogSummary').text(record.count
+            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(record.lastAt)}`
+            : '歌枠での記録はありますが、同名の曲と区別できないため数えていません。');
+        $('#historyDialogSheet')
+            .text(sheetDate != null ? `シートの最終歌唱日: ${SongHistory.formatDate(sheetDate)}` : '')
+            .prop('hidden', sheetDate == null);
+        $('#historyDialogAmbiguous')
+            .text(record.ambiguous ? `ほかに、同名の曲と区別できなかった回が ${record.ambiguous} 回あります(数に入れていません)。` : '')
+            .prop('hidden', !record.ambiguous);
+        const $list = $('#historyDialogList').empty();
+        record.performances.forEach(function (performance) {
+            const href = SongHistory.youtubeUrl(performance.videoId, performance.time);
+            if (!href) {
+                return;
+            }
+            const $link = $('<a>', { href: href, target: '_blank', rel: 'noopener noreferrer' })
+                .text(performance.streamTitle || performance.videoId);
+            const $date = $('<span>', { class: 'history-date' }).text(SongHistory.formatDate(performance.at));
+            $list.append($('<li>').append($date, $link));
+        });
+        dialogOpener = document.activeElement;
+        dialog.showModal();
+    }
+
+    // 閉じたら、開いたボタンにフォーカスを戻す(幅の切り替えなどで描き直されていたら、同じ行のボタンに)
+    let dialogOpener = null;
+    $('#historyDialog').on('close', function () {
+        let target = dialogOpener;
+        if (target && !document.body.contains(target)) {
+            target = document.querySelector(`#grid .history-button[data-row="${$(target).data('row')}"]`);
+        }
+        if (target) {
+            target.focus();
+        }
+        dialogOpener = null;
+    });
+    // 背景(dialog の外側)を押したら閉じる
+    $('#historyDialog').on('click', function (event) {
+        if (event.target === this) {
+            this.close();
+        }
+    });
+
+    $('#grid').on('click', '.history-button', function () {
+        const row = currentHistory.rows[Number($(this).data('row'))];
+        if (row) {
+            openHistoryDialog(row);
+        }
+    });
+    $('#historyDialogClose').on('click', function () {
+        document.getElementById('historyDialog').close();
+    });
+
+    // 並び順の欄。列の見出しで並べ替えたときは、合う選択肢に合わせる(合わなければ「—」)
+    const SORT_ORDERS = {
+        reading: [[0, 'asc']],
+        count: [[COLUMN_COUNT, 'desc']],
+        fewest: [[COLUMN_COUNT, 'asc']],
+        recent: [[COLUMN_LAST, 'desc']],
+        oldest: [[COLUMN_LAST, 'asc']]
+    };
+
+    $('#sortOrder').on('change', function () {
+        const order = SORT_ORDERS[$(this).val()];
+        if (table && order) {
+            table.order(order).draw();
+        }
+    });
+
+    function syncSortSelect() {
+        if (!table) {
+            return;
+        }
+        const current = JSON.stringify(table.order().map(o => [o[0], o[1]]));
+        const name = Object.keys(SORT_ORDERS).find(key => JSON.stringify(SORT_ORDERS[key]) === current);
+        $('#sortOrder').val(name || '');
+    }
+
     function loadTable(talent, type) {
         const seq = ++loadSeq;
         currentTalent = talent;
         setTalentButtons(talent);
         applyAccentColor(talent);
         showLoading();
+        currentHistory = { status: 'loading', matched: null, rows: [] };
+        updateHistoryStatus();
+        const historyRequest = fetchHistory(talent);
 
         // 読み込めなかったときは、前のタレントの曲が選んだタレントの曲に見えないよう、表を空にして知らせる
         const failed = function () {
@@ -603,21 +880,54 @@ $(function () {
             updateFilterState();
             // 曲数は「0 曲」に見えないよう消す(updateFilterState のあとに行う)
             showLoadError(true);
+            $('#historyStatus').text('');
         };
 
-        $.ajax({ url: GAS_ENDPOINT, data: { talent: talent }, dataType: 'json', timeout: LOAD_TIMEOUT })
-            .done(function (res) {
+        // 楽曲と歌枠での記録の両方がそろってから 1 回だけ描く(あとから行の高さや並びが変わらないように)
+        // 記録が HISTORY_WAIT までに届かなければ、一覧を先に出し、記録は届いたときに足す
+        const songsRequest = Promise.resolve(
+            $.ajax({ url: GAS_ENDPOINT, data: { talent: talent }, dataType: 'json', timeout: LOAD_TIMEOUT })
+        );
+        let historyArrived = false;
+        historyRequest.then(function () {
+            historyArrived = true;
+        });
+        songsRequest
+            .then(function (res) {
+                const waitLimit = new Promise(function (resolve) {
+                    setTimeout(function () {
+                        resolve({ status: 'loading' });
+                    }, HISTORY_WAIT);
+                });
+                return Promise.race([historyRequest, waitLimit]).then(function (history) {
+                    return { res: res, history: history };
+                });
+            })
+            .then(function (result) {
                 if (seq !== loadSeq) {
                     return;
                 }
+                const res = result.res;
 
                 // GAS側でエラーになった場合
-                if (res.error) {
+                if (!res || res.error) {
                     failed();
                     return;
                 }
 
                 const rows = normalizeRows(res.rows);
+                attachHistory(rows, result.history);
+                if (result.history.status === 'loading' && !historyArrived) {
+                    historyRequest.then(function (history) {
+                        if (seq !== loadSeq || $('.table-area').hasClass('has-error')) {
+                            return;
+                        }
+                        attachHistory(rows, history);
+                        table.rows().invalidate('data');
+                        table.draw(false);
+                        updateTableHeight();
+                    });
+                }
                 const wasError = $('.table-area').hasClass('has-error');
                 hasLoaded = true;
                 showLoadError(false);
@@ -643,12 +953,16 @@ $(function () {
                     $('.talent-button[aria-pressed="true"]').trigger('focus');
                 }
             })
-            .fail(function () {
+            .catch(function (error) {
                 if (seq === loadSeq) {
+                    // 描画のコードの例外もここに来るので、原因を console に残す
+                    if (error instanceof Error) {
+                        console.error(error);
+                    }
                     failed();
                 }
             })
-            .always(function () {
+            .finally(function () {
                 if (seq === loadSeq) {
                     hideLoading();
                 }
