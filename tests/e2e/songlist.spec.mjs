@@ -487,6 +487,20 @@ test.describe('スマートフォンの幅', () => {
         await page.locator('#filterToggle').click();
         await expect(page.locator('#categoryFilter')).toBeVisible();
     });
+
+    test('絞り込みを設定しても、検索欄は入力できる幅を保ち、「条件をクリア」は次の行に出す', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 740 });
+        await mockGas(page);
+        await openPage(page, 'talent=hinata&type=request');
+
+        await expect(page.locator('#clearFiltersButton')).toBeVisible();
+        const search = await page.locator('#textFilter').boundingBox();
+        const toggle = await page.locator('#filterToggle').boundingBox();
+        const clear = await page.locator('#clearFiltersButton').boundingBox();
+        expect(search.width).toBeGreaterThan(120);
+        expect(search.x + search.width).toBeLessThanOrEqual(toggle.x);
+        expect(clear.y).toBeGreaterThanOrEqual(toggle.y + toggle.height);
+    });
 });
 
 test.describe('歌枠での記録', () => {

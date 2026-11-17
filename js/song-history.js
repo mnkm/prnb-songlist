@@ -155,17 +155,8 @@
         }
     }
 
-    /**
-     * シートの曲(rows)と API の応答(response)を突き合わせる。
-     * 戻り値:
-     *  - records: rows と同じ並びの配列。記録の無い曲は null。記録は
-     *    { count, lastAt(ミリ秒), performances[{ videoId, time, at, streamTitle, artist }](新しい順),
-     *      ambiguous(同名の曲と区別できず、数に入れなかった回), setlistTitles(セトリでの曲名) }
-     *  - unmatched: シートに無い曲 [{ title, artist, count, lastAt, performances }](回数の多い順)
-     *  - since: 記録のいちばん古い配信の日時(ミリ秒)、updatedAt: 集計の日時(ミリ秒)
-     */
-    // 対応表(js/song-aliases.js)。キーはセトリの書き方の songKey
-    // 同じ曲として回数をまとめる曲名の組(js/song-aliases.js の SONG_SAME)。songKey の組にしておく
+    // 対応表(js/song-aliases.js の SONG_ALIASES)。キーはセトリの書き方の songKey。
+    // 同じ曲として回数をまとめる曲名の組(SONG_SAME)は、songKey の組にしておく
     const ALIAS_DATA = typeof module === 'object' && module.exports
         ? require('./song-aliases.js')
         : { aliases: root.SONG_ALIASES || [], same: root.SONG_SAME || [] };
@@ -211,6 +202,15 @@
         });
     }
 
+    /**
+     * シートの曲(rows)と API の応答(response)を突き合わせる。
+     * 戻り値:
+     *  - records: rows と同じ並びの配列。記録の無い曲は null。記録は
+     *    { count, lastAt(ミリ秒), performances[{ videoId, time, at, streamTitle, artist }](新しい順),
+     *      ambiguous(同名の曲と区別できず、数に入れなかった回), setlistTitles(セトリでの曲名) }
+     *  - unmatched: シートに無い曲 [{ title, artist, count, lastAt, performances }](回数の多い順)
+     *  - since: 記録のいちばん古い配信の日時(ミリ秒)、updatedAt: 集計の日時(ミリ秒)
+     */
     function matchHistory(rows, response) {
         const records = rows.map(() => null);
         const result = { records: records, unmatched: [], since: null, updatedAt: null };

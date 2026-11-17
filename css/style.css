@@ -485,7 +485,10 @@ table.dataTable tbody td.dataTables_empty {
 }
 
 .song-sub-category {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 0 6px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -1122,6 +1125,12 @@ table.dataTable tbody td.dataTables_empty {
   .search-box {
     flex: 1 1 0;
     min-width: 0;
+  }
+
+  /* 「条件をクリア」は次の行の右端に出し、検索欄の幅を削らない */
+  .clear-filters {
+    flex: 0 0 100%;
+    text-align: right;
   }
 
   /* 曲数・並び順・表示件数を 1 行にする。説明の文は出さない(押すとコピーのお知らせが出る) */
