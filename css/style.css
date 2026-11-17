@@ -1006,15 +1006,6 @@ table.dataTable tbody td.dataTables_empty {
   background: var(--accent-color);
 }
 
-.history-source {
-  margin-left: 4px;
-  padding: 0 4px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 11px;
-  color: var(--muted-text-color);
-}
-
 #grid td.history-count,
 #grid td.history-last {
   white-space: nowrap;
