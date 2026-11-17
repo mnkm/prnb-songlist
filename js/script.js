@@ -779,13 +779,10 @@ $(function () {
             return;
         }
         $('#historyDialogTitle').text(row.title);
-        const sheetDate = SongHistory.parseSheetDate(row.lastSung);
+        // 最後に歌った日は、一覧と同じく、シートの最終歌唱日と歌枠での記録の新しいほう
         $('#historyDialogSummary').text(record.count
-            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(record.lastAt)}`
+            ? `歌った回数 ${record.count} 回・最後に歌った日 ${SongHistory.formatDate(row.latest ? row.latest.at : record.lastAt)}`
             : '歌枠での記録はありますが、同名の曲と区別できないため数えていません。');
-        $('#historyDialogSheet')
-            .text(sheetDate != null ? `シートの最終歌唱日: ${SongHistory.formatDate(sheetDate)}` : '')
-            .prop('hidden', sheetDate == null);
         $('#historyDialogAmbiguous')
             .text(record.ambiguous ? `ほかに、同名の曲と区別できなかった回が ${record.ambiguous} 回あります(数に入れていません)。` : '')
             .prop('hidden', !record.ambiguous);

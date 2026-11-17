@@ -577,7 +577,8 @@ test.describe('歌枠での記録', () => {
         await page.locator('#grid tbody tr').nth(1).locator('.history-button').focus();
         await page.keyboard.press('Enter');
         await expect(page.locator('#historyDialogTitle')).toHaveText('黄色い花');
-        await expect(page.locator('#historyDialogSheet')).toHaveText('シートの最終歌唱日: 2026/12/01');
+        // 最後に歌った日は一覧と同じ(シートの日付のほうが新しい)。シートの表記は出さない
+        await expect(page.locator('#historyDialogSummary')).toHaveText('歌った回数 1 回・最後に歌った日 2026/12/01');
         await page.keyboard.press('Escape');
         await expect(dialog).toBeHidden();
         await expect(page.locator('#toast')).not.toHaveClass(/is-visible/);
